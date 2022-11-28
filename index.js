@@ -16,6 +16,8 @@ app.use(cors())
 
 app.use("/api/fuel", require("./rotues/fuel"));
 app.use("/api/auth",require("./rotues/auth"));
+app.use("/api/credit",require("./rotues/credit"));
+
 
 app.get('/', (req, res) => {
   res.send('Hello World!')

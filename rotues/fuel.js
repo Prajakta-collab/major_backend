@@ -6,7 +6,6 @@ const VehicleOwner=require('../models/VehicleOwner')
 const { body, validationResult } = require("express-validator");
 const expressAsyncHandler =require('express-async-handler');
 const LiveCredit = require('../models/LiveCredit');
-const uuid=require('uuid')
 const generateUniqueId = require('generate-unique-id');
 
 
@@ -20,7 +19,6 @@ const generateUniqueId = require('generate-unique-id');
 router.post('/addreq',expressAsyncHandler (async(req,res)=>{
     console.log(req.body)
 
-    const {transaction_no,vehicle_no,particulars,reference,debit,credit,amount_due,status}=req.body;
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
@@ -105,7 +103,6 @@ router.put('/completereq/:id', async (req, res) => {
 }
 
 })
-
 
 
 
