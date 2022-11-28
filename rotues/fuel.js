@@ -7,6 +7,8 @@ const { body, validationResult } = require("express-validator");
 const expressAsyncHandler =require('express-async-handler');
 const LiveCredit = require('../models/LiveCredit');
 const uuid=require('uuid')
+const generateUniqueId = require('generate-unique-id');
+
 
 
 
@@ -31,13 +33,23 @@ router.post('/addreq',expressAsyncHandler (async(req,res)=>{
         //console.log("userCredit",userCredit);
 
 
+        const id = generateUniqueId();
 
-        // var tc=uuid().stringyfy().slice(0,5);
-        // console.log("tc",tc)
-        const newReq=new Transaction({
-           transaction_no,vehicle_no,particulars,reference,debit,credit,amount_due,status
-        })
-        const savedreq=await newReq.save();
+        console.log("id",id)
+        // const newReq=new Transaction({
+        //    transaction_no,vehicle_no,particulars,reference,debit,credit,amount_due,status
+        // })
+        let savedreq = await Transaction.create({
+            transaction_no:id,
+            vehicle_no:req.body.vehicle_no,
+            particulars:req.body.particulars,
+            reference:req.body.reference,
+            debit:req.body.debit,
+            credit:req.body.credit,
+            amount_due:req.body.amount_due,
+            status:'req_received'
+           
+          });
         
 
         res.json(savedreq);
