@@ -28,7 +28,7 @@ router.post('/addreq',expressAsyncHandler (async(req,res)=>{
     try {
     //   / const userCredit=await LiveCredit.find();
 
-        console.log("userCredit",userCredit);
+        //console.log("userCredit",userCredit);
 
 
 
