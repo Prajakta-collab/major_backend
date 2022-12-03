@@ -7,11 +7,11 @@ const TransactionSchema = new Schema({
     ref: 'vehicleOwner'},
   vehicle_no:{type:String, required: true},
 
-  particulars: { type: String, required: true },
+  particulars: { type: String },
   reference: { type: String},
   debit: { type: Number, required: true },
-  credit: { type: Number, required: true },
-  amount_due: { type: Number, required: true },
+  credit: { type: Number },
+  amount_due: { type: Number},
 
 
   status: { type: String, required: true,enum:["req_received","pay_received","inprocess","delivered"] },

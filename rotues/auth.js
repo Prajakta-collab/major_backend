@@ -106,7 +106,7 @@ router.post(
 
     const{phone1,password}=req.body;
     try {
-      let user=await User.findOne({phone1});
+      let user=await User.findOne({phone1:phone1});
       if(!user){
         let success=false
         return res.status(400).send(success,"Please login with correct credentials");
@@ -123,16 +123,16 @@ router.post(
       //data mdhe id hya sathi vaprliy bcoz id vr index ahe apli so it will be easy and fast to retrive
       //jwt sign method use to sign the secret
       //JWT_SECRET is our 256 bit secret
-      const authToken = jwt.sign(data, JWT_SECRET);
+      const authToken = jwt.sign(data,JWT_SECRET);
       //res.json(user)
        
       success=true;
       //authToken return kru apn user la
-      res.json({success,authToken});
+      return res.status(200).json({success,authToken,data});
 
     } catch (error) {
       console.error(error.message);
-      res.status(500).send("Internal Server Error !");
+      return res.status(500).send("Internal Server Error !");
     }
 
   }

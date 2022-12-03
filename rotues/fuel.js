@@ -81,7 +81,8 @@ router.get('/getallreq',async(req,res)=>{
   
     try {
         const requests=await Transaction.find({status:'req_received'});
-        //console.log(requests);
+        
+        console.log(requests);
     res.json(requests);
     } catch (error) {
         //console.error(error.message);
@@ -125,7 +126,7 @@ router.put('/completereq/:id', async (req, res) => {
 
             newTransaction.amount_due=savedcredit.utilized_credit;
             newTransaction.credit=savedcredit.allowed_credit;
-            
+
             tr = await Transaction.findByIdAndUpdate(req.params.id, {$set: newTransaction}, {new:true})
 
         

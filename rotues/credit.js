@@ -14,13 +14,13 @@ router.get('/fetchcredit',fetchvowner,async(req,res)=>{
   
     try {
         // console.log(req.user.id);
-        const credits=await LiveCredit.findOne({vehicle_owner:req.user.id});
+        let credits=await LiveCredit.findOne({vehicle_owner:req.user.id});
         console.log(credits);
         
-    res.json(credits);
+    return res.status(200).json(credits);
     } catch (error) {
-        //console.error(error.message);
-      res.status(500).send("Internal Server Error !");
+        console.error(error.message);
+      return res.status(500).send("Internal Server Error !");
     }
     
 
