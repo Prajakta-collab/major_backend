@@ -14,7 +14,7 @@ const JWT_SECRET = "pr@j_l@ves_$u$h";
 router.post(
   '/createuser',
   [
-    body("email", "Enter a validemail ").isEmail(),
+    body("email", "Enter a valid email ").isEmail(),
     body("name", "Enter valid name").isLength({ min: 2 }),
     body("password", "Password must be of atleast 5 characters ").isLength({
       min: 5,
@@ -33,7 +33,7 @@ router.post(
     
       //if there are error in this array , then return Bad request and errors
       //findOne chya parameter mmdhe req.body.email mnje jr hya req wala email already exist krtoy tr bad request show kra
-      let user = await User.findOne({ email: req.body.email });
+      let user = await User.findOne({ phone1: req.body.phone1 });
       
       
       if (user) {
@@ -66,7 +66,8 @@ router.post(
       //res.json(user)
       success=true;
 
-      const newId= await User.findOne({ email: req.body.email });
+      const newId= await User.findOne({ phone1: req.body.phone1 });
+      
       let livecredit = await LiveCredit.create({
        vehicle_owner:newId._id,
        allowed_credit: req.body.credit,
@@ -92,7 +93,7 @@ router.post(
 router.post(
   "/login",
   [
-    body("email", "Enter a validemail ").isEmail(),
+    body("phone1", "Enter a valid phone ").isLength({min:10}).exists(),
     
     body("password", "Password can not be blank ").exists()
   ],
@@ -102,9 +103,9 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const{email,password}=req.body;
+    const{phone1,password}=req.body;
     try {
-      let user=await User.findOne({email});
+      let user=await User.findOne({phone1});
       if(!user){
         let success=false
         return res.status(400).send(success,"Please login with correct credentials");

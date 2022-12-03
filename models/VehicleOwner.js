@@ -4,13 +4,13 @@ const { Schema } = mongoose;
 const VehicleOwnerSchema = new Schema({
   
   name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
+  email: { type: String, required: true },
   password: { type: String, required: true },
   date: {
     type: Date,
     default: Date.now,
   },
-  phone1: { type: Number, required: true},
+  phone1: { type: Number, required: true, unique:true},
 phone2: { type: Number},
 
 

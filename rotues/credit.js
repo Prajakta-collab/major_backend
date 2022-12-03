@@ -6,7 +6,6 @@ const VehicleOwner=require('../models/VehicleOwner')
 const { body, validationResult } = require("express-validator");
 const expressAsyncHandler =require('express-async-handler');
 const LiveCredit = require('../models/LiveCredit');
-const generateUniqueId = require('generate-unique-id');
 const fetchvowner=require('../middleware/fetchvowner')
 
 
@@ -14,7 +13,7 @@ const fetchvowner=require('../middleware/fetchvowner')
 router.get('/fetchcredit',fetchvowner,async(req,res)=>{
   
     try {
-        console.log(req.user.id);
+        // console.log(req.user.id);
         const credits=await LiveCredit.findOne({vehicle_owner:req.user.id});
         console.log(credits);
         
