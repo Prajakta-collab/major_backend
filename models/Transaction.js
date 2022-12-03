@@ -2,10 +2,9 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
 const TransactionSchema = new Schema({
-  transaction_no: { type: String },
-  // vehicle_no:[
-  //   {type: Schema.Types.ObjectId, ref: 'vehicle'}
-  // ],
+  transaction_no: { type: String, unique:true},
+  vehicle_owner:{type: mongoose.Schema.Types.ObjectId,
+    ref: 'vehicleOwner'},
   vehicle_no:{type:String, required: true},
 
   particulars: { type: String, required: true },

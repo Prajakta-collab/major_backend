@@ -19,8 +19,8 @@ router.post(
     body("password", "Password must be of atleast 5 characters ").isLength({
       min: 5,
     }),
-    // Number.isInteger(body('phone1',"Enter 10 digit").isLength({min:10})),
-    // Number.isInteger(body('phone2',"Enter 10 digit").isLength({min:10})),
+    body('phone1',"Enter 10 digit").isLength({min:10}),
+   
 
   ],
   async (req, res) => {
@@ -67,6 +67,7 @@ router.post(
       success=true;
 
       const newId= await User.findOne({ phone1: req.body.phone1 });
+      console.log("newid",newId);
       
       let livecredit = await LiveCredit.create({
        vehicle_owner:newId._id,
