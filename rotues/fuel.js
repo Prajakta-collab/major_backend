@@ -147,4 +147,40 @@ router.put("/completereq/:id", async (req, res) => {
   }
 });
 
+//Router 5: get all cards details : pump owner dashboard cards
+router.get("/getcarddetails", async (req, res) => {
+  try {
+    const requests = await VehicleOwner.find().count();
+    const sales=await Transaction.aggregate([{
+      $group: {
+            _id: null,
+            totalValue : {
+                $sum: "$amount_due"
+            },
+            count: { $sum: 1 }
+            
+        }
+  }]);
+
+  const vehicles=await Transaction.find({status:"delivered"}).count();
+  const totalCredit=await LiveCredit.aggregate([{
+    $group: {
+          _id: null,
+          totalValue : {
+              $sum: "$allowed_credit"
+          },
+          count: { $sum: 1 }
+          
+      }
+}]);
+
+    // console.log(requests);
+    res.status(200).json({customers:requests,sales:sales[0].totalValue,vehicles:vehicles,credit:totalCredit[0].totalValue});
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send("Internal Server Error !");
+  }
+});
+
+
 module.exports = router;

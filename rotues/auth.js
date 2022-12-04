@@ -1,7 +1,7 @@
 const express = require("express");
 const User = require("../models/VehicleOwner");
-const Ponwer=require("../models/Users");
-const attendant=require("../models/Users")
+const Powner=require("../models/Users");
+const Attendant=require("../models/Users")
 const router = express.Router();
 const { body, validationResult } = require("express-validator");
 var bcrypt = require("bcryptjs");
@@ -12,7 +12,7 @@ const LiveCredit=require("../models/LiveCredit");
 
 const JWT_SECRET = "pr@j_l@ves_$u$h";
 
-// Route 1: Create a Vehicle Onwer using :Post (/api/auth/createuser)  no login required
+// Route 1: Create a Vehicle Onwer using :Post (/api/auth/createuser)  pump owner login required
 router.post(
   '/createuser',
   [
@@ -178,6 +178,192 @@ router.get(
 
   });
 
+//Router 5: create attendant : pumpowner login required
+router.post(
+  '/createatt',
+  [
+    body("email", "Enter a valid email ").isEmail(),
+    body("name", "Enter valid name").isLength({ min: 2 }),
+    body("password", "Password must be of atleast 5 characters ").isLength({
+      min: 5,
+    }),
+    body('phone1',"Enter 10 digit").isLength({min:10}),
+   
+
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    let success=false;
+    if (!errors.isEmpty()) {
+      return res.status(400).json({success, errors: errors.array() });
+    }
+    try {
+    
+      //if there are error in this array , then return Bad request and errors
+      //findOne chya parameter mmdhe req.body.email mnje jr hya req wala email already exist krtoy tr bad request show kra
+      let user = await Attendant.findOne({userType:'attendant',phone1: req.body.phone1 });
+      console.log("user",user)
+      
+      if (user) {
+        return res
+          .status(400)
+          .json({success, error: "Sorry this user is alreay exist !" });
+      }
+
+      //bcrypt js is package which help us in the hash, salt , pepper thing
+      // genSalt method ne salt generate hot
+      //hash method ne hash genrate hoil
+      const salt = await bcrypt.genSalt(10);
+      const secPass = await bcrypt.hash(req.body.password, salt);
+      user = await Attendant.create({
+        name: req.body.name,
+        password: secPass,
+        userType:'attendant',
+        email: req.body.email,
+        phone1:req.body.phone1,
+        phone2:req.body.phone2
+      });
+
+      const data = {
+        user:{ id: user.id,
+        userType:'attendant'}
+       
+      };
+      //data mdhe id hya sathi vaprliy bcoz id vr index ahe apli so it will be easy and fast to retrive
+      //jwt sign method use to sign the secret
+      //JWT_SECRET is our 256 bit secret
+      const authToken = jwt.sign(data, JWT_SECRET);
+      //res.json(user)
+      success=true;
+
+    
+
+     
+      //authToken return kru apn user la
+      res.json({success,authToken});
+
+      // .then(user => res.json(user))
+      // .catch(err=>console.log(err))}
+    } catch (error) {
+      console.error(error.message);
+      res.status(500).send("kahi tri gadbad ahe ");
+    }
+  }
+);
+
+
+//Router6 : get all pump attendants
+router.get(
+  //middleware to do
+  "/getallatt",async (req, res) => {
+      
+  try {
+    
+    const user=await Attendant.find().select("-password");
+    res.status(200).json(user);
+
+    
+  } catch (error) {
+    console.error(error.message);
+      res.status(500).send({error:"Internal Server Error !"});
+  }
+
+
+  });
+
+  //Router 7 : get particular attendant details
+  router.get(
+    //middleware to do
+    "/getatt/:id",async (req, res) => {
+        
+    try {
+      
+      const user=await Attendant.findById(req.params.id).select("-password");
+      res.status(200).json(user);
+  
+      
+    } catch (error) {
+      console.error(error.message);
+        res.status(500).send({error:"Internal Server Error !"});
+    }
+  
+  
+    });
+
+
+    
+//Router 5: create attendant : pumpowner login required
+router.post(
+  '/createpumpo',
+  [
+    body("email", "Enter a valid email ").isEmail(),
+    body("name", "Enter valid name").isLength({ min: 2 }),
+    body("password", "Password must be of atleast 5 characters ").isLength({
+      min: 5,
+    }),
+    body('phone1',"Enter 10 digit").isLength({min:10}),
+   
+
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    let success=false;
+    if (!errors.isEmpty()) {
+      return res.status(400).json({success, errors: errors.array() });
+    }
+    try {
+    
+      //if there are error in this array , then return Bad request and errors
+      //findOne chya parameter mmdhe req.body.email mnje jr hya req wala email already exist krtoy tr bad request show kra
+      let user = await Powner.findOne({userType:'p_owner',phone1: req.body.phone1 });
+      console.log("user",user)
+      
+      if (user) {
+        return res
+          .status(400)
+          .json({success, error: "Sorry this user is alreay exist !" });
+      }
+
+      //bcrypt js is package which help us in the hash, salt , pepper thing
+      // genSalt method ne salt generate hot
+      //hash method ne hash genrate hoil
+      const salt = await bcrypt.genSalt(10);
+      const secPass = await bcrypt.hash(req.body.password, salt);
+      user = await Powner.create({
+        name: req.body.name,
+        password: secPass,
+        userType:'p_owner',
+        email: req.body.email,
+        phone1:req.body.phone1,
+        phone2:req.body.phone2
+      });
+
+      const data = {
+        user:{ id: user.id,
+        userType:'p_owner'}
+       
+      };
+      //data mdhe id hya sathi vaprliy bcoz id vr index ahe apli so it will be easy and fast to retrive
+      //jwt sign method use to sign the secret
+      //JWT_SECRET is our 256 bit secret
+      const authToken = jwt.sign(data, JWT_SECRET);
+      //res.json(user)
+      success=true;
+
+    
+
+     
+      //authToken return kru apn user la
+      res.json({success,authToken});
+
+      // .then(user => res.json(user))
+      // .catch(err=>console.log(err))}
+    } catch (error) {
+      console.error(error.message);
+      res.status(500).send("kahi tri gadbad ahe ");
+    }
+  }
+);
 
 
 module.exports=router;

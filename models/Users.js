@@ -3,9 +3,11 @@ const { Schema } = mongoose;
 
 const UserSchema = new Schema({
   name: { type: String, required: true },
-  userType: { type: String, required: true,enum:["p_owner","attendant"] },
-  phone:{type:Number,required:true, unique:true},
-  email: { type: String, required: true },
+  userType: { type: String,enum:["p_owner","attendant"] },
+  phone1:{type:Number,required:true, unique:true},
+  phone2:{type:Number},
+
+  email: { type: String },
   password: { type: String, required: true },
   date: {
     type: Date,
