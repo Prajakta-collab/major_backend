@@ -69,7 +69,7 @@ router.post(
       success=true;
 
       const newId= await User.findOne({ phone1: req.body.phone1 });
-      console.log("newid",newId);
+      // console.log("newid",newId);
       
       let livecredit = await LiveCredit.create({
        vehicle_owner:newId._id,
@@ -142,6 +142,7 @@ router.post(
 
 //Router 3: get all customers : pumpo login required
 router.get(
+  //middleware to do
   "/getallcust",async (req, res) => {
       
   try {
@@ -158,8 +159,9 @@ router.get(
 
   });
 
-//Router 4: get details of particular customer
+//Router 4: get details of particular customer : pumpo login required 
 router.get(
+  //middleware to do
   "/getcust/:id",async (req, res) => {
       
   try {
@@ -175,6 +177,7 @@ router.get(
 
 
   });
+
 
 
 module.exports=router;

@@ -15,7 +15,7 @@ router.get('/fetchcredit',fetchvowner,async(req,res)=>{
     try {
         // console.log(req.user.id);
         let credits=await LiveCredit.findOne({vehicle_owner:req.user.id});
-        console.log(credits);
+        // console.log(credits);
         
     return res.status(200).json(credits);
     } catch (error) {

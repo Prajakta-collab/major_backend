@@ -7,13 +7,13 @@ const fetchvowner = (req, res, next) => {
    
     const token = req.header('auth-token');
     
-    console.log("token",token)
+    // console.log("token",token)
     if (!token) {
         res.status(401).send({ error: "No token. Access Denied !" })
     }
     try {
         const data = jwt.verify(token,JWT_SECRET);
-        console.log(data)
+        // console.log(data)
         req.user = data;
      
         next();
