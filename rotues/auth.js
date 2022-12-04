@@ -1,5 +1,7 @@
 const express = require("express");
 const User = require("../models/VehicleOwner");
+const Ponwer=require("../models/Users");
+const attendant=require("../models/Users")
 const router = express.Router();
 const { body, validationResult } = require("express-validator");
 var bcrypt = require("bcryptjs");
@@ -10,7 +12,7 @@ const LiveCredit=require("../models/LiveCredit");
 
 const JWT_SECRET = "pr@j_l@ves_$u$h";
 
-// Route 1: Create a User using :Post (/api/auth/createuser)  no login required
+// Route 1: Create a Vehicle Onwer using :Post (/api/auth/createuser)  no login required
 router.post(
   '/createuser',
   [
@@ -90,7 +92,7 @@ router.post(
   }
 );
 
-//Router 2: Authenticate a User using :Post (/api/auth/login)  no login required
+//Router 2: Authenticate a Vehicle Owner using :Post (/api/auth/login)  no login required
 router.post(
   "/login",
   [
@@ -138,23 +140,23 @@ router.post(
   }
 );
 
-//Router 3: Get logedin User Details using :Post (/api/auth/getuser)  Login required
-// router.post(
-//   "/getuser",fetchuser,async (req, res) => {
+//Router 3: get all customers : pumpo login required
+router.get(
+  "/getallcust",async (req, res) => {
       
-//   try {
-//     let userId= req.user.id;
-//     const user=await User.findById(userId).select("-password");
-//     res.send(user);
+  try {
+    
+    const user=await User.find().select("-password");
+    res.status(200).json(user);
 
     
-//   } catch (error) {
-//     console.error(error.message);
-//       res.status(500).send({error:"Internal Server Error !"});
-//   }
+  } catch (error) {
+    console.error(error.message);
+      res.status(500).send({error:"Internal Server Error !"});
+  }
 
 
-//   });
+  });
 
 
 module.exports=router;
