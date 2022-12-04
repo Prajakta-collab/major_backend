@@ -158,5 +158,23 @@ router.get(
 
   });
 
+//Router 4: get details of particular customer
+router.get(
+  "/getcust/:id",async (req, res) => {
+      
+  try {
+    
+    const user=await User.findById(req.params.id).select("-password");
+    res.status(200).json(user);
+
+    
+  } catch (error) {
+    console.error(error.message);
+      res.status(500).send({error:"Internal Server Error !"});
+  }
+
+
+  });
+
 
 module.exports=router;
