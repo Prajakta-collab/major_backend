@@ -224,12 +224,12 @@ router.get("/getreqdata", async (req, res) => {
 });
 
 
-//Router 8: get all transaction histroy for v_owner : pump o login required
-router.get("/getalltransacions", async (req, res) => {
+//Router 8: get all transaction histroy for all cusotmers : pump o login required
+router.get("/getalltransactions", async (req, res) => {
   try {
     const transactions = await Transaction.find();
 
-    // console.log(transactions);
+    console.log(transactions);
     res.status(200).json(transactions);
   } catch (error) {
     //console.error(error.message);
