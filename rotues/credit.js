@@ -26,5 +26,21 @@ router.get('/fetchcredit',fetchvowner,async(req,res)=>{
 
 })
 
+//Router 2: get credits of all customers :pump owner login required
+router.get('/fetchallcredits',async(req,res)=>{
+  
+    try {
+        // console.log(req.user.id);
+        let credits=await LiveCredit.find().populate("vehicle_owner");
+        console.log(credits);
+        
+    return res.status(200).json(credits);
+    } catch (error) {
+        console.error(error.message);
+      return res.status(500).send("Internal Server Error !");
+    }
+    
+
+})
 
 module.exports=router;
