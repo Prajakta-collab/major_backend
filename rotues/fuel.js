@@ -4,7 +4,6 @@ const Transaction = require("../models/Transaction");
 const VehicleOwner = require("../models/VehicleOwner");
 
 const { body, validationResult } = require("express-validator");
-const expressAsyncHandler = require("express-async-handler");
 const LiveCredit = require("../models/LiveCredit");
 const generateUniqueId = require("generate-unique-id");
 const fetchvowner = require("../middleware/fetchvowner");
@@ -72,14 +71,13 @@ router.get("/getallreq", async (req, res) => {
 // Router 3: get all daily Transactions : login required
 router.get("/getdailytr", async (req, res) => {
   try {
-   
-//finding transactions between 12am to current time of same day 
+    //finding transactions between 12am to current time of same day
     const transactions = await Transaction.find({
-        $and: [
-        {"tr_date": {$gte: new Date().setUTCHours(0,0,0,0)}},
-        {"tr_date": {$lt: new Date(Date.now())}}
-        ]
-      });
+      $and: [
+        { tr_date: { $gte: new Date().setUTCHours(0, 0, 0, 0) } },
+        { tr_date: { $lt: new Date(Date.now()) } },
+      ],
+    });
 
     // console.log(transactions);
     res.status(200).json(transactions);
@@ -151,36 +149,108 @@ router.put("/completereq/:id", async (req, res) => {
 router.get("/getcarddetails", async (req, res) => {
   try {
     const requests = await VehicleOwner.find().count();
-    const sales=await Transaction.aggregate([{
-      $group: {
-            _id: null,
-            totalValue : {
-                $sum: "$amount_due"
-            },
-            count: { $sum: 1 }
-            
-        }
-  }]);
-
-  const vehicles=await Transaction.find({status:"delivered"}).count();
-  const totalCredit=await LiveCredit.aggregate([{
-    $group: {
+    const sales = await Transaction.aggregate([
+      {
+        $group: {
           _id: null,
-          totalValue : {
-              $sum: "$allowed_credit"
+          totalValue: {
+            $sum: "$amount_due",
           },
-          count: { $sum: 1 }
-          
-      }
-}]);
+          count: { $sum: 1 },
+        },
+      },
+    ]);
 
-    // console.log(requests);
-    res.status(200).json({customers:requests,sales:sales[0].totalValue,vehicles:vehicles,credit:totalCredit[0].totalValue});
+    const vehicles = await Transaction.find({ status: "delivered" }).count();
+    const totalCredit = await LiveCredit.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalValue: {
+            $sum: "$allowed_credit",
+          },
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    res
+      .status(200)
+      .json({
+        customers: requests,
+        sales: sales[0].totalValue,
+        vehicles: vehicles,
+        credit: totalCredit[0].totalValue,
+      });
   } catch (error) {
     console.error(error.message);
     res.status(500).send("Internal Server Error !");
   }
 });
 
+//Router 6: get all transactions for particular customer (vehicle owner) : pump owner login required
+
+router.get("/getalltr/:id", async (req, res) => {
+  try {
+    const transactions = await Transaction.find({
+      vehicle_owner: req.params.id,
+    });
+
+    // console.log(transactions);
+    res.status(200).json(transactions);
+  } catch (error) {
+    //console.error(error.message);
+    res.status(500).send("Internal Server Error !");
+  }
+});
+
+//Router 7: get all card details on attendant dashboard .i.e completed requests, total requests, pending requests : attendant login required
+router.get("/getreqdata", async (req, res) => {
+  try {
+    const pending = await Transaction.find({
+      status:'req_received'
+    }).count();
+
+    const completed=await Transaction.find({status:'delivered'}).count();
+    const total=await Transaction.find().count();
+
+
+   
+    res.status(200).json({total_req:total,pending_req:pending, completed_req:completed});
+  } catch (error) {
+    //console.error(error.message);
+    res.status(500).send("Internal Server Error !");
+  }
+});
+
+
+//Router 8: get all transaction histroy for v_owner : pump o login required
+router.get("/getalltransacions", async (req, res) => {
+  try {
+    const transactions = await Transaction.find();
+
+    // console.log(transactions);
+    res.status(200).json(transactions);
+  } catch (error) {
+    //console.error(error.message);
+    res.status(500).send("Internal Server Error !");
+  }
+});
+
+//Router : get own transacions history : vehicle_owner login required
+
+router.get("/getalltr", async (req, res) => {
+  try {
+    const transactions = await Transaction.find({
+      vehicle_owner: req.user.id,
+    });
+
+    // console.log(transactions);
+    res.status(200).json(transactions);
+  } catch (error) {
+    //console.error(error.message);
+    res.status(500).send("Internal Server Error !");
+  }
+});
 
 module.exports = router;
