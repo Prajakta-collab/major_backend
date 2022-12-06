@@ -6,7 +6,8 @@ const VehicleOwner=require('../models/VehicleOwner')
 const { body, validationResult } = require("express-validator");
 const expressAsyncHandler =require('express-async-handler');
 const LiveCredit = require('../models/LiveCredit');
-const fetchvowner=require('../middleware/fetchvowner')
+const fetchvowner=require('../middleware/fetchvowner');
+const fetchpowner = require('../middleware/fetchpowner');
 
 
 //router 4: to get credits for the current logged in vehicle owner
@@ -27,12 +28,12 @@ router.get('/fetchcredit',fetchvowner,async(req,res)=>{
 })
 
 //Router 2: get credits of all customers :pump owner login required
-router.get('/fetchallcredits',async(req,res)=>{
+router.get('/fetchallcredits',fetchpowner,async(req,res)=>{
   
     try {
         // console.log(req.user.id);
         let credits=await LiveCredit.find().populate("vehicle_owner");
-        console.log(credits);
+        // console.log(credits);
         
     return res.status(200).json(credits);
     } catch (error) {

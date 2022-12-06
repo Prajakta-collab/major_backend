@@ -7,6 +7,7 @@ const { body, validationResult } = require("express-validator");
 var bcrypt = require("bcryptjs");
 var jwt = require("jsonwebtoken");
 const LiveCredit = require("../models/LiveCredit");
+const fetchpowner = require("../middleware/fetchpowner");
 
 const JWT_SECRET = "pr@j_l@ves_$u$h";
 
@@ -20,7 +21,7 @@ router.post(
       min: 5,
     }),
     body("phone1", "Enter 10 digit").isLength({ min: 10 }),
-  ],
+  ],fetchpowner,
   async (req, res) => {
     const errors = validationResult(req);
     let success = false;
@@ -106,18 +107,21 @@ router.post(
          user = await Powner.findOne({ userType: userType, phone1: phone1 });
         if (!user) {
            success = false;
-          return res
+           let msg="User not found"
+           return res
             .status(400)
-            .send(success, "User Not Found");
+            .json({success, msg});
         }
+        
       } else if (userType == "v_owner") {
       
          user = await User.findOne({ userType:userType,phone1: phone1 });
         if (!user) {
            success = false;
-          return res
+           let msg="User not found"
+           return res
             .status(400)
-            .send(success, "User Not Found");
+            .json({success, msg});
         }}
 
       try{
@@ -155,7 +159,7 @@ router.post(
 //Router 3: get all customers : pumpo login required
 router.get(
   //middleware to do
-  "/getallcust",
+  "/getallcust",fetchpowner,
   async (req, res) => {
     try {
       const user = await User.find().select("-password");
@@ -170,7 +174,7 @@ router.get(
 //Router 4: get details of particular customer : pumpo login required
 router.get(
   //middleware to do
-  "/getcust/:id",
+  "/getcust/:id",fetchpowner,
   async (req, res) => {
     try {
       const user = await User.findById(req.params.id).select("-password");
@@ -184,7 +188,7 @@ router.get(
 
 //Router 5: create attendant : pumpowner login required
 router.post(
-  "/createatt",
+  "/createatt",fetchpowner,
   [
     body("email", "Enter a valid email ").isEmail(),
     body("name", "Enter valid name").isLength({ min: 2 }),
@@ -250,13 +254,13 @@ router.post(
   }
 );
 
-//Router6 : get all pump attendants
+//Router6 : get all pump attendants : pump owner login required
 router.get(
-  //middleware to do
-  "/getallatt",
+  
+  "/getallatt",fetchpowner,
   async (req, res) => {
     try {
-      const user = await Attendant.find().select("-password");
+      const user = await Attendant.find({userType:'attendant'}).select("-password");
       res.status(200).json(user);
     } catch (error) {
       console.error(error.message);
@@ -265,10 +269,10 @@ router.get(
   }
 );
 
-//Router 7 : get particular attendant details
+//Router 7 : get particular attendant details : pump owner login required
 router.get(
-  //middleware to do
-  "/getatt/:id",
+  
+  "/getatt/:id",fetchpowner,
   async (req, res) => {
     try {
       const user = await Attendant.findById(req.params.id).select("-password");

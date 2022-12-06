@@ -7,8 +7,10 @@ const { body, validationResult } = require("express-validator");
 const LiveCredit = require("../models/LiveCredit");
 const generateUniqueId = require("generate-unique-id");
 const fetchvowner = require("../middleware/fetchvowner");
+const fetchatt = require("../middleware/fetchatt");
+const fetchpowner = require("../middleware/fetchpowner");
 
-//Router 1: Raising fuel request for vehicle owner : login required
+//Router 1: Raising fuel request for vehicle owner : vehicle login required
 
 router.post("/addreq", fetchvowner, async (req, res) => {
   // console.log("req.body",req)
@@ -54,9 +56,9 @@ router.post("/addreq", fetchvowner, async (req, res) => {
   }
 });
 
-//Router 2: get all pending fuel requests : pump attendant
+//Router 2: get all pending fuel requests : pump attendant login required
 
-router.get("/getallreq", async (req, res) => {
+router.get("/getallreq", fetchatt,async (req, res) => {
   try {
     const requests = await Transaction.find({ status: "req_received" });
 
@@ -87,8 +89,8 @@ router.get("/getdailytr", async (req, res) => {
   }
 });
 
-// Router 4: Complete fuel req (id) : pump attendant
-router.put("/completereq/:id", async (req, res) => {
+// Router 4: Complete fuel req (id) : pump attendant login required
+router.put("/completereq/:id",fetchatt,async (req, res) => {
   try {
     // Create a newTransaction object
     const newTransaction = {};
@@ -145,8 +147,8 @@ router.put("/completereq/:id", async (req, res) => {
   }
 });
 
-//Router 5: get all cards details : pump owner dashboard cards
-router.get("/getcarddetails", async (req, res) => {
+//Router 5: get all cards details : pump owner dashboard cards :pumpo login required
+router.get("/getcarddetails",fetchpowner,async (req, res) => {
   try {
     const requests = await VehicleOwner.find().count();
     const sales = await Transaction.aggregate([
@@ -190,7 +192,7 @@ router.get("/getcarddetails", async (req, res) => {
 
 //Router 6: get all transactions for particular customer (vehicle owner) : pump owner login required
 
-router.get("/getalltr/:id", async (req, res) => {
+router.get("/getalltr/:id",fetchpowner, async (req, res) => {
   try {
     const transactions = await Transaction.find({
       vehicle_owner: req.params.id,
@@ -205,7 +207,7 @@ router.get("/getalltr/:id", async (req, res) => {
 });
 
 //Router 7: get all card details on attendant dashboard .i.e completed requests, total requests, pending requests : attendant login required
-router.get("/getreqdata", async (req, res) => {
+router.get("/getreqdata",fetchatt, async (req, res) => {
   try {
     const pending = await Transaction.find({
       status:'req_received'
@@ -225,7 +227,7 @@ router.get("/getreqdata", async (req, res) => {
 
 
 //Router 8: get all transaction histroy for all cusotmers : pump o login required
-router.get("/getalltransactions", async (req, res) => {
+router.get("/getalltransactions", fetchpowner,async (req, res) => {
   try {
     const transactions = await Transaction.find();
 
@@ -239,7 +241,7 @@ router.get("/getalltransactions", async (req, res) => {
 
 //Router : get own transacions history : vehicle_owner login required
 
-router.get("/getalltr", async (req, res) => {
+router.get("/getalltr",fetchvowner,async (req, res) => {
   try {
     const transactions = await Transaction.find({
       vehicle_owner: req.user.id,

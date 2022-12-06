@@ -16,9 +16,13 @@ const fetchvowner = (req, res, next) => {
         // console.log(data)
         req.user = data;
      
-        next();
+        if (data.userType == 'v_owner') {
+            next();
+          }else{
+            res.status(400).json({error:"UnAuthorized request"})
+          }
     } catch (error) {
-        // res.status(401).send({ error: "Please authenticate using a valid token" })
+        res.status(401).send({ error: "Please authenticate using a valid token" })
     }
 
 }
