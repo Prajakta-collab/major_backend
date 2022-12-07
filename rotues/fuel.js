@@ -9,6 +9,7 @@ const generateUniqueId = require("generate-unique-id");
 const fetchvowner = require("../middleware/fetchvowner");
 const fetchatt = require("../middleware/fetchatt");
 const fetchpowner = require("../middleware/fetchpowner");
+var moment = require("moment");
 
 //Router 1: Raising fuel request for vehicle owner : vehicle login required
 
@@ -29,7 +30,7 @@ router.post("/addreq", fetchvowner, async (req, res) => {
 
     //if req.body.debit <= userCredit.available_credit then raising req is fine
 
-    if (req.body.debit < userCredit.available_credit) {
+    if (req.body.debit <= userCredit.available_credit) {
       const id = generateUniqueId();
 
       // console.log("id",id)
@@ -58,11 +59,13 @@ router.post("/addreq", fetchvowner, async (req, res) => {
 
 //Router 2: get all pending fuel requests : pump attendant login required
 
-router.get("/getallreq", fetchatt,async (req, res) => {
+router.get("/getallreq", fetchatt, async (req, res) => {
   try {
-    const requests = await Transaction.find({ status: "req_received" });
+    const requests = await Transaction.find({
+      status: "req_received",
+    }).populate("vehicle_owner");
 
-    // console.log(requests);
+    console.log(requests);
     res.status(200).json(requests);
   } catch (error) {
     //console.error(error.message);
@@ -70,7 +73,31 @@ router.get("/getallreq", fetchatt,async (req, res) => {
   }
 });
 
-// Router 3: get all daily Transactions : login required
+//Router 3: search pending fuel request with vehicle_no : attendant login required
+router.post("/searchreq", fetchatt, async (req, res) => {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  try {
+    let success;
+    const request = await Transaction.findOne({
+      status: "req_received",
+      vehicle_no: req.body.vehicle_no,
+    });
+    if (request) {
+      success = true;
+    }
+
+    res.status(200).json({ success, request });
+  } catch (error) {
+    console.log("error", error);
+    res.status(500).send("Internal Server Error !");
+  }
+});
+
+// Router 4: get all daily Transactions : login required
 router.get("/getdailytr", async (req, res) => {
   try {
     //finding transactions between 12am to current time of same day
@@ -89,8 +116,8 @@ router.get("/getdailytr", async (req, res) => {
   }
 });
 
-// Router 4: Complete fuel req (id) : pump attendant login required
-router.put("/completereq/:id",fetchatt,async (req, res) => {
+// Router 5: Complete fuel req (id) : pump attendant login required
+router.put("/completereq/:id", fetchatt, async (req, res) => {
   try {
     // Create a newTransaction object
     const newTransaction = {};
@@ -147,8 +174,8 @@ router.put("/completereq/:id",fetchatt,async (req, res) => {
   }
 });
 
-//Router 5: get all cards details : pump owner dashboard cards :pumpo login required
-router.get("/getcarddetails",fetchpowner,async (req, res) => {
+//Router 6: get all cards details : pump owner dashboard cards :pumpo login required
+router.get("/getcarddetails", fetchpowner, async (req, res) => {
   try {
     const requests = await VehicleOwner.find().count();
     const sales = await Transaction.aggregate([
@@ -176,23 +203,21 @@ router.get("/getcarddetails",fetchpowner,async (req, res) => {
       },
     ]);
 
-    res
-      .status(200)
-      .json({
-        customers: requests,
-        sales: sales[0].totalValue,
-        vehicles: vehicles,
-        credit: totalCredit[0].totalValue,
-      });
+    res.status(200).json({
+      customers: requests,
+      sales: sales[0].totalValue,
+      vehicles: vehicles,
+      credit: totalCredit[0].totalValue,
+    });
   } catch (error) {
     console.error(error.message);
     res.status(500).send("Internal Server Error !");
   }
 });
 
-//Router 6: get all transactions for particular customer (vehicle owner) : pump owner login required
+//Router 7: get all transactions for particular customer (vehicle owner) : pump owner login required
 
-router.get("/getalltr/:id",fetchpowner, async (req, res) => {
+router.get("/getalltr/:id", fetchpowner, async (req, res) => {
   try {
     const transactions = await Transaction.find({
       vehicle_owner: req.params.id,
@@ -206,28 +231,31 @@ router.get("/getalltr/:id",fetchpowner, async (req, res) => {
   }
 });
 
-//Router 7: get all card details on attendant dashboard .i.e completed requests, total requests, pending requests : attendant login required
-router.get("/getreqdata",fetchatt, async (req, res) => {
+//Router 8: get all card details on attendant dashboard .i.e completed requests, total requests, pending requests : attendant login required
+router.get("/getreqdata", fetchatt, async (req, res) => {
   try {
     const pending = await Transaction.find({
-      status:'req_received'
+      status: "req_received",
     }).count();
 
-    const completed=await Transaction.find({status:'delivered'}).count();
-    const total=await Transaction.find().count();
+    const completed = await Transaction.find({ status: "delivered" }).count();
+    const total = await Transaction.find().count();
 
-
-   
-    res.status(200).json({total_req:total,pending_req:pending, completed_req:completed});
+    res
+      .status(200)
+      .json({
+        total_req: total,
+        pending_req: pending,
+        completed_req: completed,
+      });
   } catch (error) {
     //console.error(error.message);
     res.status(500).send("Internal Server Error !");
   }
 });
 
-
-//Router 8: get all transaction histroy for all cusotmers : pump o login required
-router.get("/getalltransactions", fetchpowner,async (req, res) => {
+//Router 9: get all transaction histroy for all cusotmers : pump o login required
+router.get("/getalltransactions", fetchpowner, async (req, res) => {
   try {
     const transactions = await Transaction.find();
 
@@ -239,9 +267,9 @@ router.get("/getalltransactions", fetchpowner,async (req, res) => {
   }
 });
 
-//Router : get own transacions history : vehicle_owner login required
+//Router 10: get own transacions history : vehicle_owner login required
 
-router.get("/getalltr",fetchvowner,async (req, res) => {
+router.get("/getalltr", fetchvowner, async (req, res) => {
   try {
     const transactions = await Transaction.find({
       vehicle_owner: req.user.id,
@@ -255,4 +283,114 @@ router.get("/getalltr",fetchvowner,async (req, res) => {
   }
 });
 
+//Router 11: search in all transactions with vehicle_owner name : pump owner login required
+router.post("/searchbyname", fetchpowner, async (req, res) => {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  try {
+    const cust = await VehicleOwner.findOne({ name: req.body.name });
+    const transactions = await Transaction.find({
+      vehicle_owner: cust._id,
+    });
+
+    // console.log(transactions);
+    res.status(200).json(transactions);
+  } catch (error) {
+    //console.error(error.message);
+    res.status(500).send("Internal Server Error !");
+  }
+});
+
+//Router 12: filter all user transactions by duration - daily, last 7 days, last one month , YTD (year till date) : pump owner login required
+router.post("/filteralltr", fetchpowner, async (req, res) => {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  let transactions;
+  try {
+    if (req.body.duration === "daily") {
+      transactions = await Transaction.find({
+        $and: [
+          { tr_date: { $gte: new Date().setUTCHours(0, 0, 0, 0) } },
+          { tr_date: { $lt: new Date(Date.now()) } },
+        ],
+      });
+    } else if (req.body.duration === "weekly") {
+      var d = new Date();
+      d.setDate(d.getDate() - 7);
+      transactions = await Transaction.aggregate([
+        { $match: { tr_date: { $gt: d } } },
+      ]);
+    } else if (req.body.duration === "month") {
+      var d = new Date();
+      d.setDate(d.getDate() - 30);
+      transactions = await Transaction.aggregate([
+        { $match: { tr_date: { $gt: d } } },
+      ]);
+    } else if (req.body.duration === "year") {
+      var d = new Date();
+      d.setDate(d.getDate() - 365);
+      transactions = await Transaction.aggregate([
+        { $match: { tr_date: { $gt: d } } },
+      ]);
+    }
+
+    // console.log(transactions);
+    res.status(200).json(transactions);
+  } catch (error) {
+    //console.error(error.message);
+    res.status(500).send("Internal Server Error !");
+  }
+});
+
+//Router 13: filter own transactions by duration - daily, last 7 days, last one month , YTD (year till date) : vehicle owner login required
+router.post("/filterowntr", fetchvowner, async (req, res) => {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  let transactions;
+  var d = new Date();
+  try {
+    if (req.body.duration === "daily") {
+      transactions = await Transaction.find({
+        vehicle_owner: req.user.id,
+        $and: [
+          { tr_date: { $gte: new Date().setUTCHours(0, 0, 0, 0) } },
+          { tr_date: { $lt: new Date(Date.now()) } },
+        ],
+      });
+    } else if (req.body.duration === "weekly") {
+      d.setDate(d.getDate() - 7);
+      transactions = await Transaction.find({
+        vehicle_owner: req.user.id,
+        $and: [{ tr_date: { $gte: d } }],
+      });
+    } else if (req.body.duration === "month") {
+      d.setDate(d.getDate() - 30);
+      transactions = await Transaction.find({
+        vehicle_owner: req.user.id,
+        $and: [{ tr_date: { $gte: d } }],
+      });
+    } else if (req.body.duration === "year") {
+      d.setDate(d.getDate() - 365);
+      transactions = await Transaction.find({
+        vehicle_owner: req.user.id,
+        $and: [{ tr_date: { $gte: d } }],
+      });
+    }
+
+    // console.log(transactions);
+    res.status(200).json(transactions);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send("Internal Server Error !");
+  }
+});
 module.exports = router;

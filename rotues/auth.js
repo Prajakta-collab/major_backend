@@ -8,6 +8,7 @@ var bcrypt = require("bcryptjs");
 var jwt = require("jsonwebtoken");
 const LiveCredit = require("../models/LiveCredit");
 const fetchpowner = require("../middleware/fetchpowner");
+const VehicleOwner = require("../models/VehicleOwner");
 
 const JWT_SECRET = "pr@j_l@ves_$u$h";
 
@@ -21,7 +22,8 @@ router.post(
       min: 5,
     }),
     body("phone1", "Enter 10 digit").isLength({ min: 10 }),
-  ],fetchpowner,
+  ],
+  fetchpowner,
   async (req, res) => {
     const errors = validationResult(req);
     let success = false;
@@ -103,63 +105,54 @@ router.post(
     let user;
     let success;
     if (userType == "attendant" || userType == "p_owner") {
-     
-         user = await Powner.findOne({ userType: userType, phone1: phone1 });
-        if (!user) {
-           success = false;
-           let msg="User not found"
-           return res
-            .status(400)
-            .json({success, msg});
-        }
-        
-      } else if (userType == "v_owner") {
-      
-         user = await User.findOne({ userType:userType,phone1: phone1 });
-        if (!user) {
-           success = false;
-           let msg="User not found"
-           return res
-            .status(400)
-            .json({success, msg});
-        }}
-
-      try{
-        let passwordCompare = await bcrypt.compare(password, user.password);
-        if (!passwordCompare) {
-          success = false;
-          return res
-            .status(400)
-            .send(success, "Please login with correct credentials");
-        }
-        const data = {
-          id: user.id,
-          userType: userType,
-        };
-        //data mdhe id hya sathi vaprliy bcoz id vr index ahe apli so it will be easy and fast to retrive
-        //jwt sign method use to sign the secret
-        //JWT_SECRET is our 256 bit secret
-        const authToken = jwt.sign(data, JWT_SECRET);
-        //res.json(user)
-
-        success = true;
-        //authToken return kru apn user la
-        return res.status(200).json({ success, authToken, data });
-      } catch (error) {
-        console.error(error.message);
-        return res.status(500).send("Internal Server Error !");
+      user = await Powner.findOne({ userType: userType, phone1: phone1 });
+      if (!user) {
+        success = false;
+        let msg = "User not found";
+        return res.status(400).json({ success, msg });
       }
-    
+    } else if (userType == "v_owner") {
+      user = await User.findOne({ userType: userType, phone1: phone1 });
+      if (!user) {
+        success = false;
+        let msg = "User not found";
+        return res.status(400).json({ success, msg });
+      }
+    }
 
-       
-      
+    try {
+      let passwordCompare = await bcrypt.compare(password, user.password);
+      if (!passwordCompare) {
+        success = false;
+        return res
+          .status(400)
+          .send(success, "Please login with correct credentials");
+      }
+      const data = {
+        id: user.id,
+        userType: userType,
+      };
+      //data mdhe id hya sathi vaprliy bcoz id vr index ahe apli so it will be easy and fast to retrive
+      //jwt sign method use to sign the secret
+      //JWT_SECRET is our 256 bit secret
+      const authToken = jwt.sign(data, JWT_SECRET);
+      //res.json(user)
+
+      success = true;
+      //authToken return kru apn user la
+      return res.status(200).json({ success, authToken, data });
+    } catch (error) {
+      console.error(error.message);
+      return res.status(500).send("Internal Server Error !");
+    }
   }
 );
 
 //Router 3: get all customers : pumpo login required
 router.get(
   //middleware to do
-  "/getallcust",fetchpowner,
+  "/getallcust",
+  fetchpowner,
   async (req, res) => {
     try {
       const user = await User.find().select("-password");
@@ -174,11 +167,14 @@ router.get(
 //Router 4: get details of particular customer : pumpo login required
 router.get(
   //middleware to do
-  "/getcust/:id",fetchpowner,
+  "/getcust/:id",
+  fetchpowner,
   async (req, res) => {
     try {
       const user = await User.findById(req.params.id).select("-password");
-      res.status(200).json(user);
+      const liveCredit = await LiveCredit.findOne({ vehicle_owner: user._id });
+      console.log({ user, liveCredit });
+      res.status(200).json({ user, liveCredit });
     } catch (error) {
       console.error(error.message);
       res.status(500).send({ error: "Internal Server Error !" });
@@ -188,7 +184,8 @@ router.get(
 
 //Router 5: create attendant : pumpowner login required
 router.post(
-  "/createatt",fetchpowner,
+  "/createatt",
+  fetchpowner,
   [
     body("email", "Enter a valid email ").isEmail(),
     body("name", "Enter valid name").isLength({ min: 2 }),
@@ -255,34 +252,28 @@ router.post(
 );
 
 //Router6 : get all pump attendants : pump owner login required
-router.get(
-  
-  "/getallatt",fetchpowner,
-  async (req, res) => {
-    try {
-      const user = await Attendant.find({userType:'attendant'}).select("-password");
-      res.status(200).json(user);
-    } catch (error) {
-      console.error(error.message);
-      res.status(500).send({ error: "Internal Server Error !" });
-    }
+router.get("/getallatt", fetchpowner, async (req, res) => {
+  try {
+    const user = await Attendant.find({ userType: "attendant" }).select(
+      "-password"
+    );
+    res.status(200).json(user);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send({ error: "Internal Server Error !" });
   }
-);
+});
 
 //Router 7 : get particular attendant details : pump owner login required
-router.get(
-  
-  "/getatt/:id",fetchpowner,
-  async (req, res) => {
-    try {
-      const user = await Attendant.findById(req.params.id).select("-password");
-      res.status(200).json(user);
-    } catch (error) {
-      console.error(error.message);
-      res.status(500).send({ error: "Internal Server Error !" });
-    }
+router.get("/getatt/:id", fetchpowner, async (req, res) => {
+  try {
+    const user = await Attendant.findById(req.params.id).select("-password");
+    res.status(200).json(user);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send({ error: "Internal Server Error !" });
   }
-);
+});
 
 //Router 8: create pumpowner  :  no login required (admin can access this)
 router.post(
@@ -351,5 +342,129 @@ router.post(
     }
   }
 );
+
+//Router 9: delete vehicle owner : pump owner login required
+router.delete("/deletevo/:id", fetchpowner, async (req, res) => {
+  try {
+    // Find the user to be deleted and delete it
+    let user = await VehicleOwner.findById(req.params.id);
+    if (!user) {
+      return res.status(404).send("Not Found");
+    }
+
+    user = await VehicleOwner.findByIdAndDelete(req.params.id);
+    credit=await LiveCredit.findOneAndDelete({vehicle_owner: user._id});
+    res.json({ Success: "User has been Deleted !", user: user});
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send("Internal Server Error !");
+  }
+});
+
+//Router 10: update vehicle owner : pump owner login required
+router.put("/updatevo/:id", fetchpowner, async (req, res) => {
+  const { name, phone1, phone2, email,Credit} = req.body;
+  try {
+    // Create a newUser object
+    const newUser = {};
+    if (name) {
+      newUser.name = name;
+    }
+    if (phone1) {
+      newUser.phone1 = phone1;
+    }
+    if (phone2) {
+      newUser.phone2 = phone2;
+    }
+    if (email) {
+      newUser.email = email;
+    }
+
+    const newCredit = {};
+
+    if (Credit) {
+      newCredit.allowed_credit = Credit;
+    }
+
+    // Find the user to be updated and update it
+    let user = await VehicleOwner.findById(req.params.id);
+    let credit = await LiveCredit.find({ vehicle_owner: user._id});
+    if (!user && !credit) {
+      return res.status(404).send("Not Found");
+    }
+
+    user = await VehicleOwner.findByIdAndUpdate(
+      req.params.id,
+      { $set: newUser },
+      { new: true }
+    );
+    credit = await LiveCredit.findOneAndUpdate(
+      { vehicle_owner: user._id },
+      { $set: newCredit },
+      { new: true }
+    );
+    res.status(200).json({ user, credit });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send("Internal Server Error !");
+  }
+});
+
+//Router 11: delete pump attendant : pump owner login required
+router.delete("/deleteatt/:id", fetchpowner, async (req, res) => {
+  try {
+    // Find the user to be deleted and delete it
+    let user = await Attendant.find({
+      userType: "attendant",
+      _id: req.params.id,
+    });
+    if (!user) {
+      return res.status(404).send("Not Found");
+    }
+
+    user = await Attendant.findByIdAndDelete(req.params.id);
+    res.json({ Success: "User has been Deleted !", user: user });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send("Internal Server Error !");
+  }
+});
+
+//Router 12 : update attendant : pump owner login required
+router.put("/updateatt/:id", fetchpowner, async (req, res) => {
+  const { name, phone1, phone2, email } = req.body;
+  try {
+    // Create a newUser object
+    const newUser = {};
+    if (name) {
+      newUser.name = name;
+    }
+    if (phone1) {
+      newUser.phone1 = phone1;
+    }
+    if (phone2) {
+      newUser.phone2 = phone2;
+    }
+    if (email) {
+      newUser.email = email;
+    }
+
+    // Find the user to be updated and update it
+    let user = await Attendant.findById(req.params.id);
+    if (!user) {
+      return res.status(404).send("Not Found");
+    }
+
+    user = await Attendant.findByIdAndUpdate(
+      req.params.id,
+      { $set: newUser },
+      { new: true }
+    );
+    res.json(user);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send("Internal Server Error !");
+  }
+});
 
 module.exports = router;
