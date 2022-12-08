@@ -173,7 +173,7 @@ router.get(
     try {
       const user = await User.findById(req.params.id).select("-password");
       const liveCredit = await LiveCredit.findOne({ vehicle_owner: user._id });
-      console.log({ user, liveCredit });
+      // console.log({ user, liveCredit });
       res.status(200).json({ user, liveCredit });
     } catch (error) {
       console.error(error.message);

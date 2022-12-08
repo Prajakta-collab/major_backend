@@ -6,6 +6,7 @@ const VehicleOwnerSchema = new Schema({
   name: { type: String, required: true },
   email: { type: String, required: true },
   password: { type: String, required: true },
+  isActive:{type:Boolean},
   date: {
     type: Date,
     default: Date.now,
@@ -13,11 +14,6 @@ const VehicleOwnerSchema = new Schema({
   phone1: { type: Number, required: true, unique:true},
 phone2: { type: Number},
 
-
-  // vehicle_no: [{ type: String}],
-//  allowed_credit: { type: Number, required: true},
-
- 
 });
 const VehicleOwner = mongoose.model("vehicleOwner", VehicleOwnerSchema);
 

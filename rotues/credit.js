@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Transaction = require("../models/Transaction");
 const VehicleOwner = require("../models/VehicleOwner");
-
+const generateUniqueId = require("generate-unique-id");
 const { body, validationResult } = require("express-validator");
 const expressAsyncHandler = require("express-async-handler");
 const LiveCredit = require("../models/LiveCredit");
@@ -37,31 +37,48 @@ router.get("/fetchallcredits", fetchpowner, async (req, res) => {
   }
 });
 
-//Router 3: renew credit of particular customer : pump owner login required
-router.put("/renew/:id", fetchpowner, async (req, res) => {
-  try {
-    //allowed_credit =utilized_credit
-    //utlized_credit=0
+//Router 3: payment for particular customer -> update credit: pump owner login required
+router.post("/payment/:id", fetchpowner, async (req, res) => {
+  const errors = validationResult(req);
 
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  try {
+   
     const credit = await LiveCredit.findOne({ vehicle_owner: req.params.id });
     console.log("credit",credit)
     let updated;
+    const id = generateUniqueId();
 
-    if (credit.available_credit===0) {
+    //logic
+    //utilized_credit = utilized_credit-req.body.credit
+    //available_credit=available_credit+req.body.credit
+
+    let savedreq = await Transaction.create({
+      transaction_no: id,
+      vehicle_owner: req.params.id,
+      particulars: req.body.particulars,
+      reference: req.body.reference,
+      debit: 0,
+      credit: req.body.credit,
+      amount_due: credit.utilized_credit-req.body.credit,
+      status: "pay_received",
+    });
+    
       let newCredit = {};
       newCredit.allowed_credit = credit.allowed_credit;
-      newCredit.utilized_credit = 0;
-      newCredit.available_credit = newCredit.allowed_credit;
+      newCredit.utilized_credit = credit.utilized_credit-req.body.credit;
+      newCredit.available_credit = credit.available_credit+req.body.credit;
 
       updated = await LiveCredit.findOneAndUpdate(
         { vehicle_owner: req.params.id },
         { $set: newCredit },
         { new: true }
       );
-      res.status(200).json(updated);
-    } else {
-      return res.status(400).send("This user still has some credit remained !");
-    }
+
+      res.status(200).json({updated,savedreq});
+    
   } catch (error) {
     console.error(error.message);
     res.status(500).send("Internal Server Error !");

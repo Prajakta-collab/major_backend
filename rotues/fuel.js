@@ -65,7 +65,7 @@ router.get("/getallreq", fetchatt, async (req, res) => {
       status: "req_received",
     }).populate("vehicle_owner");
 
-    console.log(requests);
+    // console.log(requests);
     res.status(200).json(requests);
   } catch (error) {
     //console.error(error.message);

@@ -5,7 +5,7 @@ const TransactionSchema = new Schema({
   transaction_no: { type: String, unique:true},
   vehicle_owner:{type: mongoose.Schema.Types.ObjectId,
     ref: 'vehicleOwner'},
-  vehicle_no:{type:String, required: true},
+  vehicle_no:{type:String},
 
   particulars: { type: String },
   reference: { type: String},
