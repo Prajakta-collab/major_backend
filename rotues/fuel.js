@@ -257,7 +257,7 @@ router.get("/getreqdata", fetchatt, async (req, res) => {
 //Router 9: get all transaction histroy for all cusotmers : pump o login required
 router.get("/getalltransactions", fetchpowner, async (req, res) => {
   try {
-    const transactions = await Transaction.find();
+    const transactions = await Transaction.find().populate('vehicle_owner');
 
     console.log(transactions);
     res.status(200).json(transactions);
