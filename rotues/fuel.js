@@ -273,7 +273,7 @@ router.get("/getalltr", fetchvowner, async (req, res) => {
   try {
     const transactions = await Transaction.find({
       vehicle_owner: req.user.id,
-    });
+    }).populate("vehicle_owner");
 
     // console.log(transactions);
     res.status(200).json(transactions);
