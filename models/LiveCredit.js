@@ -6,7 +6,7 @@ const LiveCreditSchema = new Schema({
       ref: 'vehicleOwner'},
   allowed_credit: { type: Number, required: true},
   utilized_credit: { type: Number, required: true},
-
+    
   available_credit: { type: Number, required: true}
 
 

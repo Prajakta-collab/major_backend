@@ -352,9 +352,14 @@ router.delete("/deletevo/:id", fetchpowner, async (req, res) => {
       return res.status(404).send("Not Found");
     }
 
-    user = await VehicleOwner.findByIdAndDelete(req.params.id);
-    credit=await LiveCredit.findOneAndDelete({vehicle_owner: user._id});
-    res.json({ Success: "User has been Deleted !", user: user});
+
+    const newVo={};
+    newVo.active=false;
+    user = await VehicleOwner.findOneAndUpdate(
+      { _id: req.params.id },
+      { $set: newVo },
+      { new: true }
+    );    res.json({ Success: "User has been Deactivated !", user: user});
   } catch (error) {
     console.error(error.message);
     res.status(500).send("Internal Server Error !");
@@ -422,8 +427,14 @@ router.delete("/deleteatt/:id", fetchpowner, async (req, res) => {
       return res.status(404).send("Not Found");
     }
 
-    user = await Attendant.findByIdAndDelete(req.params.id);
-    res.json({ Success: "User has been Deleted !", user: user });
+    const newAtt={};
+    newAtt.isActive=false;
+    user = await Attendant.findOneAndUpdate(
+      { _id: req.params.id },
+      { $set: newAtt },
+      { new: true }
+    );
+    res.json({ Success: "User has been Deactivated !", user: user });
   } catch (error) {
     console.error(error.message);
     res.status(500).send("Internal Server Error !");

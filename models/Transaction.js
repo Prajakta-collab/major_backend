@@ -5,12 +5,12 @@ const TransactionSchema = new Schema({
   transaction_no: { type: String, unique:true},
   vehicle_owner:{type: mongoose.Schema.Types.ObjectId,
     ref: 'vehicleOwner'},
-  vehicle_no:{type:String},
+  vehicle_no:{type:String,default:"-"},
 
   particulars: { type: String },
   reference: { type: String},
-  debit: { type: Number, required: true },
-  credit: { type: Number },
+  debit: { type: Number, required: true ,default:0},
+  credit: { type: Number,default:0 },
   amount_due: { type: Number},
 
 

@@ -82,7 +82,7 @@ router.post("/searchreq", fetchatt, async (req, res) => {
   }
   try {
     let success;
-    const request = await Transaction.findOne({
+    const request = await Transaction.find({
       status: "req_received",
       vehicle_no: req.body.vehicle_no,
     });
@@ -292,9 +292,12 @@ router.post("/searchbyname", fetchpowner, async (req, res) => {
   }
   try {
     const cust = await VehicleOwner.findOne({ name: req.body.name });
+    if(!cust){
+      return res.status(404).send("User Not Found");
+    }
     const transactions = await Transaction.find({
       vehicle_owner: cust._id,
-    });
+    }).populate('vehicle_owner');
 
     // console.log(transactions);
     res.status(200).json(transactions);
@@ -319,8 +322,12 @@ router.post("/filteralltr", fetchpowner, async (req, res) => {
           { tr_date: { $gte: new Date().setUTCHours(0, 0, 0, 0) } },
           { tr_date: { $lt: new Date(Date.now()) } },
         ],
-      });
-    } else if (req.body.duration === "weekly") {
+      }).populate("vehicle_owner");
+    } else if (req.body.duration === "all") {
+      var d = new Date();
+      d.setDate(d.getDate() - 7);
+      transactions = await Transaction.find().populate("vehicle_owner");
+    }else if (req.body.duration === "weekly") {
       var d = new Date();
       d.setDate(d.getDate() - 7);
       transactions = await Transaction.aggregate([

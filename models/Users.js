@@ -6,7 +6,7 @@ const UserSchema = new Schema({
   userType: { type: String,enum:["p_owner","attendant"] },
   phone1:{type:Number,required:true, unique:true},
   phone2:{type:Number},
-
+  isActive:{type:Boolean},
   email: { type: String },
   password: { type: String, required: true },
   
