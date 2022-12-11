@@ -6,7 +6,7 @@ const VehicleOwnerSchema = new Schema({
   name: { type: String, required: true },
   email: { type: String, required: true },
   password: { type: String, required: true },
-  isActive:{type:Boolean},
+  isActive:{type:Boolean,default:true},
   date: {
     type: Date,
     default: Date.now,
