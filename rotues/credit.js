@@ -52,13 +52,34 @@ router.post("/payment/:id", fetchpowner, async (req, res) => {
     if(credit.vehicle_owner.isActive===false){
       return res.status(400).send("This user is not active");
     }
-    
+
     let updated;
     const id = generateUniqueId();
 
     //logic
     //utilized_credit = utilized_credit-req.body.credit
     //available_credit=available_credit+req.body.credit
+    let newCredit = {};
+    //when available credit has become 0 for this customer 
+    if(credit.available_credit===0){
+      newCredit.allowed_credit=req.body.credit;
+      newCredit.utilized_credit=0;
+    }else{
+      newCredit.allowed_credit=credit.allowed_credit+req.body.credit;
+      newCredit.utilized_credit=credit.utilized_credit;
+
+    }
+
+
+
+    newCredit.available_credit=credit.allowed_credit-credit.utilized_credit+req.body.credit;
+    
+    
+
+
+    
+   
+
 
     let savedreq = await Transaction.create({
       transaction_no: id,
@@ -67,21 +88,11 @@ router.post("/payment/:id", fetchpowner, async (req, res) => {
       reference: req.body.reference,
       debit: 0,
       credit: req.body.credit,
-      amount_due: credit.utilized_credit-req.body.credit,
+      amount_due: newCredit.utilized_credit,
       status: "pay_received",
     });
     
-      let newCredit = {};
-      newCredit.allowed_credit = credit.allowed_credit;
-      if(credit.utilized_credit-req.body.credit>=0){
-        newCredit.utilized_credit = credit.utilized_credit-req.body.credit;
-
-      }
-
-
-      
-      newCredit.available_credit = credit.available_credit+req.body.credit;
-
+   
       updated = await LiveCredit.findOneAndUpdate(
         { vehicle_owner: req.params.id },
         { $set: newCredit },

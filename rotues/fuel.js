@@ -157,8 +157,8 @@ router.put("/completereq/:id", fetchatt, async (req, res) => {
         { new: true }
       );
 
-      newTransaction.amount_due = savedcredit.utilized_credit;
-      newTransaction.credit = savedcredit.allowed_credit;
+      newTransaction.amount_due = newCredit.utilized_credit;
+      newTransaction.credit = newCredit.allowed_credit;
 
       tr = await Transaction.findByIdAndUpdate(
         req.params.id,

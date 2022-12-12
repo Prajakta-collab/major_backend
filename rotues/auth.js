@@ -106,10 +106,14 @@ router.post(
     let success;
     if (userType == "attendant" || userType == "p_owner") {
       user = await Powner.findOne({ userType: userType, phone1: phone1 });
-      if (!user) {
+      if (!user ) {
         success = false;
         let msg = "User not found";
         return res.status(400).json({ success, msg });
+      }else if(user.isActive===false){
+        success = false;
+        let msg = "This user is deactivated";
+         res.status(400).json({ success, msg });
       }
     } else if (userType == "v_owner") {
       user = await User.findOne({ userType: userType, phone1: phone1 });
@@ -117,6 +121,10 @@ router.post(
         success = false;
         let msg = "User not found";
         return res.status(400).json({ success, msg });
+      }else if(user.isActive===false){
+        success = false;
+        let msg = "This user is deactivated";
+         res.status(400).json({ success, msg });
       }
     }
 
@@ -130,6 +138,7 @@ router.post(
       }
       const data = {
         id: user.id,
+        name:user.name,
         userType: userType,
       };
       //data mdhe id hya sathi vaprliy bcoz id vr index ahe apli so it will be easy and fast to retrive
