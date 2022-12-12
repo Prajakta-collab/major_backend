@@ -354,7 +354,7 @@ router.delete("/deletevo/:id", fetchpowner, async (req, res) => {
 
 
     const newVo={};
-    newVo.active=false;
+    newVo.isActive=false;
     user = await VehicleOwner.findOneAndUpdate(
       { _id: req.params.id },
       { $set: newVo },

@@ -46,8 +46,13 @@ router.post("/payment/:id", fetchpowner, async (req, res) => {
   }
   try {
    
-    const credit = await LiveCredit.findOne({ vehicle_owner: req.params.id });
+    const credit = await LiveCredit.findOne({ vehicle_owner: req.params.id }).populate("vehicle_owner");
     console.log("credit",credit)
+
+    if(credit.vehicle_owner.isActive===false){
+      return res.status(400).send("This user is not active");
+    }
+    
     let updated;
     const id = generateUniqueId();
 
@@ -68,7 +73,13 @@ router.post("/payment/:id", fetchpowner, async (req, res) => {
     
       let newCredit = {};
       newCredit.allowed_credit = credit.allowed_credit;
-      newCredit.utilized_credit = credit.utilized_credit-req.body.credit;
+      if(credit.utilized_credit-req.body.credit>=0){
+        newCredit.utilized_credit = credit.utilized_credit-req.body.credit;
+
+      }
+
+
+      
       newCredit.available_credit = credit.available_credit+req.body.credit;
 
       updated = await LiveCredit.findOneAndUpdate(
