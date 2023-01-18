@@ -41,13 +41,16 @@ router.get("/fetchallcredits", fetchpowner, async (req, res) => {
 router.post("/payment/:id", fetchpowner, async (req, res) => {
   const errors = validationResult(req);
 
+  console.log("req.body",req.body)
+  console.log("type of credit",typeof(req.body.credit))
+
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
   try {
    
     const credit = await LiveCredit.findOne({ vehicle_owner: req.params.id }).populate("vehicle_owner");
-    console.log("credit",credit)
+   
 
     if(credit.vehicle_owner.isActive===false){
       return res.status(400).send("This user is not active");
@@ -65,6 +68,7 @@ router.post("/payment/:id", fetchpowner, async (req, res) => {
       newCredit.allowed_credit=req.body.credit;
       newCredit.utilized_credit=0;
     }else{
+    
       newCredit.allowed_credit=credit.allowed_credit+req.body.credit;
       newCredit.utilized_credit=credit.utilized_credit;
 
