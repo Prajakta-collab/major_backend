@@ -15,6 +15,7 @@ var moment = require("moment");
 
 router.post("/addreq", fetchvowner, async (req, res) => {
   // console.log("req.body",req)
+  let success;
 
   const errors = validationResult(req);
 
@@ -46,20 +47,27 @@ router.post("/addreq", fetchvowner, async (req, res) => {
         amount_due: req.body.amount_due,
         status: "req_received",
       });
-
-      res.status(200).send("Request sent Successfullly");
+      success = true;
+        let msg = "Request sent Successfullly";
+      res.status(200).json({success,msg});
     } else {
-      res.status(500).send("Your Credit is not enough");
+      success = false;
+        let msg = "Your Credit is not enough";
+      res.status(400).json({success,msg});
+      
     }
   } catch (error) {
     console.error(error.message);
-    res.status(500).send("Internal Server Error !");
+    success = false;
+    let msg = "Internal Server Error !";
+  res.status(500).json({success,msg});
   }
 });
 
 //Router 2: get all pending fuel requests : pump attendant login required
 
 router.get("/getallreq", fetchatt, async (req, res) => {
+  let success;
   try {
     const requests = await Transaction.find({
       status: "req_received",
@@ -69,7 +77,9 @@ router.get("/getallreq", fetchatt, async (req, res) => {
     res.status(200).json(requests);
   } catch (error) {
     //console.error(error.message);
-    res.status(500).send("Internal Server Error !");
+    success = false;
+    let msg = "Internal Server Error !";
+  res.status(500).json({success,msg});
   }
 });
 
@@ -118,6 +128,7 @@ router.get("/getdailytr", async (req, res) => {
 
 // Router 5: Complete fuel req (id) : pump attendant login required
 router.put("/completereq/:id", fetchatt, async (req, res) => {
+  let success;
   try {
     // Create a newTransaction object
     const newTransaction = {};
@@ -167,10 +178,13 @@ router.put("/completereq/:id", fetchatt, async (req, res) => {
       );
     }
 
-    res.status(200).send("Request completed successfully !");
-  } catch (error) {
+    success = true;
+    let msg = "Request Completed Successfullly";
+  res.status(200).json({success,msg});  } catch (error) {
     console.error(error.message);
-    res.status(500).send("Internal Server Error !");
+    success = false;
+    let msg = "Internal Server Error !";
+  res.status(500).json({success,msg});
   }
 });
 
