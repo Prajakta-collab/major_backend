@@ -11,7 +11,8 @@ const fetchpowner = require("../middleware/fetchpowner");
 const VehicleOwner = require("../models/VehicleOwner");
 require('dotenv').config();
 
-const JWT_SECRET = process.env.JWT_SECRET;
+
+const JWT_SECRET = process.env.JWT_SECRET
 
 // Route 1: Create a Vehicle Onwer using :Post (/api/auth/createuser)  pump owner login required
 router.post(
