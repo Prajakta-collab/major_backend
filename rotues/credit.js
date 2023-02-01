@@ -28,7 +28,7 @@ router.get("/fetchallcredits", fetchpowner, async (req, res) => {
   try {
     // console.log(req.user.id);
     let credits = await LiveCredit.find().populate("vehicle_owner");
-    // console.log(credits);
+    console.log(credits);
 
     return res.status(200).json(credits);
   } catch (error) {

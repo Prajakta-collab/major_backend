@@ -74,6 +74,7 @@ router.post(
         allowed_credit: req.body.credit,
         utilized_credit: 0,
         available_credit: req.body.credit,
+        requestable_amount:req.body.credit
       });
 
       //authToken return kru apn user la

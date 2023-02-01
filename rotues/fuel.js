@@ -27,40 +27,63 @@ router.post("/addreq", fetchvowner, async (req, res) => {
     // console.log("req.user.id", req.user.user.id);
     const userCredit = await LiveCredit.findOne({ vehicle_owner: req.user.id });
 
-    // console.log("userCredit", userCredit);
+    console.log("userCredit", userCredit);
 
     //if req.body.debit <= userCredit.available_credit then raising req is fine
 
     if (req.body.debit <= userCredit.available_credit) {
-      const id = generateUniqueId();
+      if(userCredit.requestable_amount-req.body.debit<0){
+        console.log("<requestable amount")
+        success = false;
+        let msg = "You can't request more than this amount !";
+        return res.status(500).json({ success, msg });
+      }else{
+        const id = generateUniqueId();
 
-      // console.log("id",id)
+        // console.log("id",id)
+  
+        let savedreq = await Transaction.create({
+          transaction_no: id,
+          vehicle_owner: req.user.id,
+          vehicle_no: req.body.vehicle_no,
+          particulars: req.body.particulars,
+          reference: req.body.reference,
+          debit: req.body.debit,
+          credit: req.body.credit,
+          amount_due: req.body.amount_due,
+          status: "req_received",
+        });
 
-      let savedreq = await Transaction.create({
-        transaction_no: id,
-        vehicle_owner: req.user.id,
-        vehicle_no: req.body.vehicle_no,
-        particulars: req.body.particulars,
-        reference: req.body.reference,
-        debit: req.body.debit,
-        credit: req.body.credit,
-        amount_due: req.body.amount_due,
-        status: "req_received",
-      });
-      success = true;
+        const newCredit = {};
+
+    
+
+      newCredit.requestable_amount =userCredit.requestable_amount-req.body.debit;
+        
+      
+
+      //update live credit of that customer
+
+      const savedcredit = await LiveCredit.findByIdAndUpdate(
+        req.user.id,
+        { $set: newCredit },
+        { new: true }
+      );
+        success = true;
         let msg = "Request sent Successfullly";
-      res.status(200).json({success,msg});
+        return res.status(200).json({ success, msg });
+      }
+    
     } else {
       success = false;
-        let msg = "Your Credit is not enough";
-      res.status(400).json({success,msg});
-      
+      let msg = "Your Credit is not enough";
+      res.status(400).json({ success, msg });
     }
   } catch (error) {
     console.error(error.message);
     success = false;
     let msg = "Internal Server Error !";
-  res.status(500).json({success,msg});
+    res.status(500).json({ success, msg });
   }
 });
 
@@ -79,7 +102,7 @@ router.get("/getallreq", fetchatt, async (req, res) => {
     //console.error(error.message);
     success = false;
     let msg = "Internal Server Error !";
-  res.status(500).json({success,msg});
+    res.status(500).json({ success, msg });
   }
 });
 
@@ -180,11 +203,12 @@ router.put("/completereq/:id", fetchatt, async (req, res) => {
 
     success = true;
     let msg = "Request Completed Successfullly";
-  res.status(200).json({success,msg});  } catch (error) {
+    res.status(200).json({ success, msg });
+  } catch (error) {
     console.error(error.message);
     success = false;
     let msg = "Internal Server Error !";
-  res.status(500).json({success,msg});
+    res.status(500).json({ success, msg });
   }
 });
 
@@ -255,13 +279,11 @@ router.get("/getreqdata", fetchatt, async (req, res) => {
     const completed = await Transaction.find({ status: "delivered" }).count();
     const total = await Transaction.find().count();
 
-    res
-      .status(200)
-      .json({
-        total_req: total,
-        pending_req: pending,
-        completed_req: completed,
-      });
+    res.status(200).json({
+      total_req: total,
+      pending_req: pending,
+      completed_req: completed,
+    });
   } catch (error) {
     //console.error(error.message);
     res.status(500).send("Internal Server Error !");
@@ -271,7 +293,7 @@ router.get("/getreqdata", fetchatt, async (req, res) => {
 //Router 9: get all transaction histroy for all cusotmers : pump o login required
 router.get("/getalltransactions", fetchpowner, async (req, res) => {
   try {
-    const transactions = await Transaction.find().populate('vehicle_owner');
+    const transactions = await Transaction.find().populate("vehicle_owner");
 
     console.log(transactions);
     res.status(200).json(transactions);
@@ -306,12 +328,12 @@ router.post("/searchbyname", fetchpowner, async (req, res) => {
   }
   try {
     const cust = await VehicleOwner.findOne({ name: req.body.name });
-    if(!cust){
+    if (!cust) {
       return res.status(404).send("User Not Found");
     }
     const transactions = await Transaction.find({
       vehicle_owner: cust._id,
-    }).populate('vehicle_owner');
+    }).populate("vehicle_owner");
 
     // console.log(transactions);
     res.status(200).json(transactions);
@@ -341,7 +363,7 @@ router.post("/filteralltr", fetchpowner, async (req, res) => {
       var d = new Date();
       d.setDate(d.getDate() - 7);
       transactions = await Transaction.find().populate("vehicle_owner");
-    }else if (req.body.duration === "weekly") {
+    } else if (req.body.duration === "weekly") {
       var d = new Date();
       d.setDate(d.getDate() - 7);
       transactions = await Transaction.aggregate([
