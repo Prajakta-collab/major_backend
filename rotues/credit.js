@@ -16,10 +16,10 @@ router.get("/fetchcredit", fetchvowner, async (req, res) => {
     let credits = await LiveCredit.findOne({ vehicle_owner: req.user.id });
     // console.log(credits);
 
-    return res.status(200).json(credits);
+    return res.status(200).json({ success: true, credits });
   } catch (error) {
     console.error(error.message);
-    return res.status(500).send("Internal Server Error !");
+    res.status(500).json({ success: false, msg: "Internal Server Error !" });
   }
 });
 
@@ -30,10 +30,10 @@ router.get("/fetchallcredits", fetchpowner, async (req, res) => {
     let credits = await LiveCredit.find().populate("vehicle_owner");
     console.log(credits);
 
-    return res.status(200).json(credits);
+    return res.status(200).json({ success: true, credits });
   } catch (error) {
     console.error(error.message);
-    return res.status(500).send("Internal Server Error !");
+    res.status(500).json({ success: false, msg: "Internal Server Error !" });
   }
 });
 
@@ -41,18 +41,18 @@ router.get("/fetchallcredits", fetchpowner, async (req, res) => {
 router.post("/payment/:id", fetchpowner, async (req, res) => {
   const errors = validationResult(req);
 
-  console.log("req.body",req.body)
-  console.log("type of credit",typeof(req.body.credit))
+  console.log("req.body", req.body);
+  console.log("type of credit", typeof req.body.credit);
 
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
   try {
-   
-    const credit = await LiveCredit.findOne({ vehicle_owner: req.params.id }).populate("vehicle_owner");
-   
+    const credit = await LiveCredit.findOne({
+      vehicle_owner: req.params.id,
+    }).populate("vehicle_owner");
 
-    if(credit.vehicle_owner.isActive===false){
+    if (credit.vehicle_owner.isActive === false) {
       return res.status(400).send("This user is not active");
     }
 
@@ -63,27 +63,17 @@ router.post("/payment/:id", fetchpowner, async (req, res) => {
     //utilized_credit = utilized_credit-req.body.credit
     //available_credit=available_credit+req.body.credit
     let newCredit = {};
-    //when available credit has become 0 for this customer 
-    if(credit.available_credit===0){
-      newCredit.allowed_credit=req.body.credit;
-      newCredit.utilized_credit=0;
-    }else{
-    
-      newCredit.allowed_credit=credit.allowed_credit+req.body.credit;
-      newCredit.utilized_credit=credit.utilized_credit;
-
+    //when available credit has become 0 for this customer
+    if (credit.available_credit === 0) {
+      newCredit.allowed_credit = req.body.credit;
+      newCredit.utilized_credit = 0;
+    } else {
+      newCredit.allowed_credit = credit.allowed_credit + req.body.credit;
+      newCredit.utilized_credit = credit.utilized_credit;
     }
 
-
-
-    newCredit.available_credit=credit.allowed_credit-credit.utilized_credit+req.body.credit;
-    
-    
-
-
-    
-   
-
+    newCredit.available_credit =
+      credit.allowed_credit - credit.utilized_credit + req.body.credit;
 
     let savedreq = await Transaction.create({
       transaction_no: id,
@@ -95,19 +85,17 @@ router.post("/payment/:id", fetchpowner, async (req, res) => {
       amount_due: newCredit.utilized_credit,
       status: "pay_received",
     });
-    
-   
-      updated = await LiveCredit.findOneAndUpdate(
-        { vehicle_owner: req.params.id },
-        { $set: newCredit },
-        { new: true }
-      );
 
-      res.status(200).json({updated,savedreq});
-    
+    updated = await LiveCredit.findOneAndUpdate(
+      { vehicle_owner: req.params.id },
+      { $set: newCredit },
+      { new: true }
+    );
+
+    res.status(200).json({ success:true,updated, savedreq });
   } catch (error) {
     console.error(error.message);
-    res.status(500).send("Internal Server Error !");
+    res.status(500).json({ success: false, msg: "Internal Server Error !" });
   }
 });
 

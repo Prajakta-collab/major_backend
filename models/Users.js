@@ -9,7 +9,7 @@ const UserSchema = new Schema({
   isActive:{type:Boolean,default:true},
   email: { type: String },
   password: { type: String, required: true },
-  
+  shift:{type:String},
   date: {
     type: Date,
     default: Date.now,

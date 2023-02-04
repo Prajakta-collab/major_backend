@@ -9,10 +9,9 @@ var jwt = require("jsonwebtoken");
 const LiveCredit = require("../models/LiveCredit");
 const fetchpowner = require("../middleware/fetchpowner");
 const VehicleOwner = require("../models/VehicleOwner");
-require('dotenv').config();
+require("dotenv").config();
 
-
-const JWT_SECRET = process.env.JWT_SECRET
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Route 1: Create a Vehicle Onwer using :Post (/api/auth/createuser)  pump owner login required
 router.post(
@@ -29,6 +28,7 @@ router.post(
   async (req, res) => {
     const errors = validationResult(req);
     let success = false;
+    let msg;
     if (!errors.isEmpty()) {
       return res.status(400).json({ success, errors: errors.array() });
     }
@@ -74,17 +74,20 @@ router.post(
         allowed_credit: req.body.credit,
         utilized_credit: 0,
         available_credit: req.body.credit,
-        requestable_amount:req.body.credit
+        requestable_amount: req.body.credit,
       });
 
       //authToken return kru apn user la
-      res.json({ success, authToken, livecredit });
+      msg = "Customer Created Successfully !";
+      res.status(200).json({ success, msg, authToken, livecredit });
 
       // .then(user => res.json(user))
       // .catch(err=>console.log(err))}
     } catch (error) {
       console.error(error.message);
-      res.status(500).send("kahi tri gadbad ahe ");
+      success = false;
+      msg = "Internal Server Error!";
+      res.status(500).json({ success, msg });
     }
   }
 );
@@ -101,47 +104,48 @@ router.post(
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+       res.status(400).json({ errors: errors.array() });
     }
 
     const { phone1, password, userType } = req.body;
     let user;
     let success;
-    if (userType == "attendant" || userType == "p_owner") {
-      user = await Powner.findOne({ userType: userType, phone1: phone1 });
-      if (!user ) {
-        success = false;
-        let msg = "User not found";
-        return res.status(400).json({ success, msg });
-      }else if(user.isActive===false){
-        success = false;
-        let msg = "This user is deactivated";
-         res.status(400).json({ success, msg });
-      }
-    } else if (userType == "v_owner") {
-      user = await User.findOne({ userType: userType, phone1: phone1 });
-      if (!user) {
-        success = false;
-        let msg = "User not found";
-        return res.status(400).json({ success, msg });
-      }else if(user.isActive===false){
-        success = false;
-        let msg = "This user is deactivated";
-         res.status(400).json({ success, msg });
-      }
-    }
+  
 
     try {
+      if (userType == "attendant" || userType == "p_owner") {
+        user = await Powner.findOne({ userType: userType, phone1: phone1 });
+        if (!user) {
+          success = false;
+          let msg = "User not found";
+           res.status(400).json({ success, msg });
+        } else if (user.isActive === false) {
+          success = false;
+          let msg = "This user is deactivated";
+          res.status(400).json({ success, msg });
+        }
+      } else if (userType == "v_owner") {
+        user = await User.findOne({ userType: userType, phone1: phone1 });
+        if (!user) {
+          success = false;
+          let msg = "User not found";
+           res.status(400).json({ success, msg });
+        } else if (user.isActive === false) {
+          success = false;
+          let msg = "This user is deactivated";
+          res.status(400).json({ success, msg });
+        }
+      }
       let passwordCompare = await bcrypt.compare(password, user.password);
       if (!passwordCompare) {
         success = false;
-        return res
+         res
           .status(400)
           .send(success, "Please login with correct credentials");
       }
       const data = {
         id: user.id,
-        name:user.name,
+        name: user.name,
         userType: userType,
       };
       //data mdhe id hya sathi vaprliy bcoz id vr index ahe apli so it will be easy and fast to retrive
@@ -152,10 +156,10 @@ router.post(
 
       success = true;
       //authToken return kru apn user la
-      return res.status(200).json({ success, authToken, data });
+       res.status(200).json({ success, authToken, data });
     } catch (error) {
-      console.error(error.message);
-      return res.status(500).send("Internal Server Error !");
+      console.error("error",error.message);
+       res.status(500).json({success:false,msg:"Internal Server Error !"});
     }
   }
 );
@@ -168,10 +172,11 @@ router.get(
   async (req, res) => {
     try {
       const user = await User.find().select("-password");
+      console.log("users", user);
       res.status(200).json(user);
     } catch (error) {
       console.error(error.message);
-      res.status(500).send({ error: "Internal Server Error !" });
+      res.status(500).json({ msg: "Internal Server Error !" });
     }
   }
 );
@@ -224,7 +229,7 @@ router.post(
       if (user) {
         return res
           .status(400)
-          .json({ success, error: "Sorry this user is alreay exist !" });
+          .json({ success, msg: "Sorry this user is alreay exist !" });
       }
 
       //bcrypt js is package which help us in the hash, salt , pepper thing
@@ -239,6 +244,7 @@ router.post(
         email: req.body.email,
         phone1: req.body.phone1,
         phone2: req.body.phone2,
+        shift: req.body.shift,
       });
 
       const data = {
@@ -252,13 +258,16 @@ router.post(
       success = true;
 
       //authToken return kru apn user la
-      res.json({ success, authToken });
+      res
+        .status(200)
+        .json({ success, msg: "Attendant Created Successfully!", authToken });
 
       // .then(user => res.json(user))
       // .catch(err=>console.log(err))}
     } catch (error) {
       console.error(error.message);
-      res.status(500).send("kahi tri gadbad ahe ");
+      success = false;
+      res.status(500).json({ success, msg: "Internal Server Error!" });
     }
   }
 );
@@ -272,7 +281,7 @@ router.get("/getallatt", fetchpowner, async (req, res) => {
     res.status(200).json(user);
   } catch (error) {
     console.error(error.message);
-    res.status(500).send({ error: "Internal Server Error !" });
+    res.status(500).json({ success: false, msg: "Internal Server Error !" });
   }
 });
 
@@ -283,7 +292,7 @@ router.get("/getatt/:id", fetchpowner, async (req, res) => {
     res.status(200).json(user);
   } catch (error) {
     console.error(error.message);
-    res.status(500).send({ error: "Internal Server Error !" });
+    res.status(500).json({ success: false, msg: "Internal Server Error !" });
   }
 });
 
@@ -316,7 +325,7 @@ router.post(
       if (user) {
         return res
           .status(400)
-          .json({ success, error: "Sorry this user is alreay exist !" });
+          .json({ success, msg: "Sorry this user is alreay exist !" });
       }
 
       //bcrypt js is package which help us in the hash, salt , pepper thing
@@ -344,13 +353,13 @@ router.post(
       success = true;
 
       //authToken return kru apn user la
-      res.json({ success, authToken });
+      res.json({ success, msg: "Pump Owner Created Successfully!", authToken });
 
       // .then(user => res.json(user))
       // .catch(err=>console.log(err))}
     } catch (error) {
       console.error(error.message);
-      res.status(500).send("kahi tri gadbad ahe ");
+      res.status(500).json({ success: false, msg: "Internal Server Error !" });
     }
   }
 );
@@ -361,26 +370,30 @@ router.delete("/deletevo/:id", fetchpowner, async (req, res) => {
     // Find the user to be deleted and delete it
     let user = await VehicleOwner.findById(req.params.id);
     if (!user) {
-      return res.status(404).send("Not Found");
+      return res.status(400).json({ success: false, msg: "User Not Found" });
     }
 
-
-    const newVo={};
-    newVo.isActive=false;
+    const newVo = {};
+    newVo.isActive = false;
     user = await VehicleOwner.findOneAndUpdate(
       { _id: req.params.id },
       { $set: newVo },
       { new: true }
-    );    res.json({ Success: "User has been Deactivated !", user: user});
+    );
+    res.json({
+      success: false,
+      msg: "User has been Deactivated !",
+      user: user,
+    });
   } catch (error) {
     console.error(error.message);
-    res.status(500).send("Internal Server Error !");
+    res.status(500).json({ success: false, msg: "Internal Server Error !" });
   }
 });
 
 //Router 10: update vehicle owner : pump owner login required
 router.put("/updatevo/:id", fetchpowner, async (req, res) => {
-  const { name, phone1, phone2, email,Credit} = req.body;
+  const { name, phone1, phone2, email, Credit } = req.body;
   try {
     // Create a newUser object
     const newUser = {};
@@ -405,9 +418,9 @@ router.put("/updatevo/:id", fetchpowner, async (req, res) => {
 
     // Find the user to be updated and update it
     let user = await VehicleOwner.findById(req.params.id);
-    let credit = await LiveCredit.find({ vehicle_owner: user._id});
+    let credit = await LiveCredit.find({ vehicle_owner: user._id });
     if (!user && !credit) {
-      return res.status(404).send("Not Found");
+      return res.status(400).json({ success: false, msg: "User Not Found" });
     }
 
     user = await VehicleOwner.findByIdAndUpdate(
@@ -420,10 +433,17 @@ router.put("/updatevo/:id", fetchpowner, async (req, res) => {
       { $set: newCredit },
       { new: true }
     );
-    res.status(200).json({ user, credit });
+    res
+      .status(200)
+      .json({
+        success: true,
+        msg: "Customer Updated Successfully!",
+        user,
+        credit,
+      });
   } catch (error) {
     console.error(error.message);
-    res.status(500).send("Internal Server Error !");
+    res.status(500).json({ success: false, msg: "Internal Server Error !" });
   }
 });
 
@@ -436,20 +456,22 @@ router.delete("/deleteatt/:id", fetchpowner, async (req, res) => {
       _id: req.params.id,
     });
     if (!user) {
-      return res.status(404).send("Not Found");
+      return res.status(400).json({ success: false, msg: "User Not Found" });
     }
 
-    const newAtt={};
-    newAtt.isActive=false;
+    const newAtt = {};
+    newAtt.isActive = false;
     user = await Attendant.findOneAndUpdate(
       { _id: req.params.id },
       { $set: newAtt },
       { new: true }
     );
-    res.json({ Success: "User has been Deactivated !", user: user });
+    res
+      .status(200)
+      .json({ success: true, msg: "Attendant Deleted Successfully!", user });
   } catch (error) {
     console.error(error.message);
-    res.status(500).send("Internal Server Error !");
+    res.status(500).json({ success: false, msg: "Internal Server Error !" });
   }
 });
 
@@ -475,7 +497,7 @@ router.put("/updateatt/:id", fetchpowner, async (req, res) => {
     // Find the user to be updated and update it
     let user = await Attendant.findById(req.params.id);
     if (!user) {
-      return res.status(404).send("Not Found");
+      return res.status(400).json({ success: false, msg: "User Not Found" });
     }
 
     user = await Attendant.findByIdAndUpdate(
@@ -483,10 +505,12 @@ router.put("/updateatt/:id", fetchpowner, async (req, res) => {
       { $set: newUser },
       { new: true }
     );
-    res.json(user);
+    res
+      .status(200)
+      .json({ success: true, msg: "Attendant Updated Successfully!", user });
   } catch (error) {
     console.error(error.message);
-    res.status(500).send("Internal Server Error !");
+    res.status(500).json({ success: false, msg: "Internal Server Error !" });
   }
 });
 

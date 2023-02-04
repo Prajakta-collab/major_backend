@@ -50,25 +50,29 @@ router.post("/addreq", fetchvowner, async (req, res) => {
           reference: req.body.reference,
           debit: req.body.debit,
           credit: req.body.credit,
-          amount_due: req.body.amount_due,
+          amount_due: req.body.amount_due || 0,
           status: "req_received",
         });
 
+
         const newCredit = {};
-
+        let newAmount=userCredit.requestable_amount-req.body.debit;
     
-
-      newCredit.requestable_amount =userCredit.requestable_amount-req.body.debit;
+console.log("userCredit.requestable_amount-req.body.debit",newAmount);
+      newCredit.requestable_amount=newAmount;
         
       
 
       //update live credit of that customer
-
-      const savedcredit = await LiveCredit.findByIdAndUpdate(
-        req.user.id,
-        { $set: newCredit },
-        { new: true }
+console.log("newCredit",newCredit);
+console.log("req.user.id",req.user.id);
+      await LiveCredit.findOneAndUpdate(
+       { vehicle_owner:req.user.id},
+       { $set:newCredit},
+       {new:true}
+        
       );
+
         success = true;
         let msg = "Request sent Successfullly";
         return res.status(200).json({ success, msg });
@@ -126,7 +130,7 @@ router.post("/searchreq", fetchatt, async (req, res) => {
     res.status(200).json({ success, request });
   } catch (error) {
     console.log("error", error);
-    res.status(500).send("Internal Server Error !");
+    res.status(500).json({ success:false,msg: "Internal Server Error !" });
   }
 });
 
@@ -145,7 +149,7 @@ router.get("/getdailytr", async (req, res) => {
     res.status(200).json(transactions);
   } catch (error) {
     console.error(error.message);
-    res.status(500).send("Internal Server Error !");
+    res.status(500).json({ success:false,msg: "Internal Server Error !" });
   }
 });
 
@@ -215,18 +219,20 @@ router.put("/completereq/:id", fetchatt, async (req, res) => {
 //Router 6: get all cards details : pump owner dashboard cards :pumpo login required
 router.get("/getcarddetails", fetchpowner, async (req, res) => {
   try {
-    const requests = await VehicleOwner.find().count();
-    const sales = await Transaction.aggregate([
+    const customer = await VehicleOwner.find().count();
+    const sales = await LiveCredit.aggregate([
       {
         $group: {
           _id: null,
           totalValue: {
-            $sum: "$amount_due",
+            $sum: "$utilized_credit",
           },
           count: { $sum: 1 },
         },
       },
     ]);
+
+    console.log("sales",sales);
 
     const vehicles = await Transaction.find({ status: "delivered" }).count();
     const totalCredit = await LiveCredit.aggregate([
@@ -241,15 +247,17 @@ router.get("/getcarddetails", fetchpowner, async (req, res) => {
       },
     ]);
 
+
     res.status(200).json({
-      customers: requests,
+
+      customers: customer,
       sales: sales[0].totalValue,
       vehicles: vehicles,
       credit: totalCredit[0].totalValue,
     });
   } catch (error) {
     console.error(error.message);
-    res.status(500).send("Internal Server Error !");
+    res.status(500).json({ success:false,msg: "Internal Server Error !" });
   }
 });
 
@@ -265,7 +273,7 @@ router.get("/getalltr/:id", fetchpowner, async (req, res) => {
     res.status(200).json(transactions);
   } catch (error) {
     //console.error(error.message);
-    res.status(500).send("Internal Server Error !");
+    res.status(500).json({ success:false,msg: "Internal Server Error !" });
   }
 });
 
@@ -277,7 +285,7 @@ router.get("/getreqdata", fetchatt, async (req, res) => {
     }).count();
 
     const completed = await Transaction.find({ status: "delivered" }).count();
-    const total = await Transaction.find().count();
+    const total = await Transaction.find({status:"delivered" || "req_received"}).count();
 
     res.status(200).json({
       total_req: total,
@@ -286,7 +294,7 @@ router.get("/getreqdata", fetchatt, async (req, res) => {
     });
   } catch (error) {
     //console.error(error.message);
-    res.status(500).send("Internal Server Error !");
+    res.status(500).json({ success:false,msg: "Internal Server Error !" });
   }
 });
 
@@ -299,7 +307,7 @@ router.get("/getalltransactions", fetchpowner, async (req, res) => {
     res.status(200).json(transactions);
   } catch (error) {
     //console.error(error.message);
-    res.status(500).send("Internal Server Error !");
+    res.status(500).json({ success:false,msg: "Internal Server Error !" });
   }
 });
 
@@ -315,7 +323,7 @@ router.get("/getalltr", fetchvowner, async (req, res) => {
     res.status(200).json(transactions);
   } catch (error) {
     //console.error(error.message);
-    res.status(500).send("Internal Server Error !");
+    res.status(500).json({ success:false,msg: "Internal Server Error !" });
   }
 });
 
@@ -329,7 +337,7 @@ router.post("/searchbyname", fetchpowner, async (req, res) => {
   try {
     const cust = await VehicleOwner.findOne({ name: req.body.name });
     if (!cust) {
-      return res.status(404).send("User Not Found");
+      return res.status(404).json({success:true,msg:"User Not Found"});
     }
     const transactions = await Transaction.find({
       vehicle_owner: cust._id,
@@ -339,7 +347,7 @@ router.post("/searchbyname", fetchpowner, async (req, res) => {
     res.status(200).json(transactions);
   } catch (error) {
     //console.error(error.message);
-    res.status(500).send("Internal Server Error !");
+    res.status(500).json({ success:false,msg: "Internal Server Error !" });
   }
 });
 
@@ -387,7 +395,7 @@ router.post("/filteralltr", fetchpowner, async (req, res) => {
     res.status(200).json(transactions);
   } catch (error) {
     //console.error(error.message);
-    res.status(500).send("Internal Server Error !");
+    res.status(500).json({ success:false,msg: "Internal Server Error !" });
   }
 });
 
@@ -433,7 +441,7 @@ router.post("/filterowntr", fetchvowner, async (req, res) => {
     res.status(200).json(transactions);
   } catch (error) {
     console.error(error.message);
-    res.status(500).send("Internal Server Error !");
+    res.status(500).json({ success:false,msg: "Internal Server Error !" });
   }
 });
 module.exports = router;
