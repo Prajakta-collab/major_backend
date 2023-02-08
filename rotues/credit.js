@@ -52,6 +52,9 @@ router.post("/payment/:id", fetchpowner, async (req, res) => {
       vehicle_owner: req.params.id,
     }).populate("vehicle_owner");
 
+
+    console.log("credit",credit);
+
     if (credit.vehicle_owner.isActive === false) {
       return res.status(400).send("This user is not active");
     }
@@ -71,9 +74,11 @@ router.post("/payment/:id", fetchpowner, async (req, res) => {
       newCredit.allowed_credit = credit.allowed_credit + req.body.credit;
       newCredit.utilized_credit = credit.utilized_credit;
     }
+    newCredit.requestable_amount=credit.requestable_amount+req.body.credit;
 
     newCredit.available_credit =
       credit.allowed_credit - credit.utilized_credit + req.body.credit;
+
 
     let savedreq = await Transaction.create({
       transaction_no: id,
