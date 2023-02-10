@@ -376,19 +376,19 @@ router.post("/filteralltr", fetchpowner, async (req, res) => {
       d.setDate(d.getDate() - 7);
       transactions = await Transaction.aggregate([
         { $match: { tr_date: { $gt: d } } },
-      ]);
+      ]).populate("vehicle_owner");;
     } else if (req.body.duration === "month") {
       var d = new Date();
       d.setDate(d.getDate() - 30);
       transactions = await Transaction.aggregate([
         { $match: { tr_date: { $gt: d } } },
-      ]);
+      ]).populate("vehicle_owner");;
     } else if (req.body.duration === "year") {
       var d = new Date();
       d.setDate(d.getDate() - 365);
       transactions = await Transaction.aggregate([
         { $match: { tr_date: { $gt: d } } },
-      ]);
+      ]).populate("vehicle_owner");;
     }
 
     // console.log(transactions);
