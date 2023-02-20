@@ -303,7 +303,7 @@ router.get("/getalltransactions", fetchpowner, async (req, res) => {
   try {
     const transactions = await Transaction.find().populate("vehicle_owner");
 
-    console.log(transactions);
+    // console.log(transactions);
     res.status(200).json(transactions);
   } catch (error) {
     //console.error(error.message);
@@ -366,32 +366,46 @@ router.post("/filteralltr", fetchpowner, async (req, res) => {
           { tr_date: { $gte: new Date().setUTCHours(0, 0, 0, 0) } },
           { tr_date: { $lt: new Date(Date.now()) } },
         ],
-      }).populate("vehicle_owner");
+      })
+      transactions=await Transaction.populate(transactions, {path: "vehicle_owner"});
+
     } else if (req.body.duration === "all") {
       var d = new Date();
       d.setDate(d.getDate() - 7);
       transactions = await Transaction.find().populate("vehicle_owner");
+
+      transactions=await Transaction.populate(transactions, {path: "vehicle_owner"});
+
     } else if (req.body.duration === "weekly") {
       var d = new Date();
       d.setDate(d.getDate() - 7);
       transactions = await Transaction.aggregate([
         { $match: { tr_date: { $gt: d } } },
-      ]).populate("vehicle_owner");;
+      ]);
+
+      transactions=await Transaction.populate(transactions, {path: "vehicle_owner"});
+
     } else if (req.body.duration === "month") {
       var d = new Date();
       d.setDate(d.getDate() - 30);
       transactions = await Transaction.aggregate([
         { $match: { tr_date: { $gt: d } } },
-      ]).populate("vehicle_owner");;
+      ]);
+
+      transactions=await Transaction.populate(transactions, {path: "vehicle_owner"});
+
     } else if (req.body.duration === "year") {
       var d = new Date();
       d.setDate(d.getDate() - 365);
       transactions = await Transaction.aggregate([
         { $match: { tr_date: { $gt: d } } },
-      ]).populate("vehicle_owner");;
-    }
+      ])
 
-    // console.log(transactions);
+      transactions=await Transaction.populate(transactions, {path: "vehicle_owner"});
+
+    }
+    
+    console.log(transactions);
     res.status(200).json(transactions);
   } catch (error) {
     //console.error(error.message);
