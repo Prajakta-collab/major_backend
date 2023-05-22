@@ -514,4 +514,31 @@ router.put("/updateatt/:id", fetchpowner, async (req, res) => {
   }
 });
 
+//Router 13 : update active status of a particular customer : pump owner login required
+router.put("/updatestatus/:id", fetchpowner, async (req, res) => {
+  try {
+     
+     
+    
+    // Find the user to be updated and update it
+    let user = await VehicleOwner.findById(req.params.id);
+    if (!user) {
+      return res.status(400).json({ success: false, msg: "User Not Found" });
+    }
+    var newvalues = { $set: {isActive: !user.isActive } };
+
+    user = await VehicleOwner.findByIdAndUpdate(
+      req.params.id,
+      newvalues,
+      { new: true }
+    );
+    res
+      .status(200)
+      .json({ success: true, msg: " isActive Status updated successfully", user });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ success: false, msg: "Internal Server Error !" });
+  }
+});
+
 module.exports = router;
