@@ -10,6 +10,16 @@ const fetchvowner = require("../middleware/fetchvowner");
 const fetchatt = require("../middleware/fetchatt");
 const fetchpowner = require("../middleware/fetchpowner");
 var moment = require("moment");
+const QRCode = require('qrcode');
+var fs = require('fs');
+var svg2img = require('svg2img');
+var btoa = require('btoa');
+const Jimp = require("jimp");
+
+
+// __ Importing qrcode-reader __ \\
+const qrCodeReader = require('qrcode-reader');
+
 
 //Router 1: Raising fuel request for vehicle owner : vehicle login required
 
@@ -39,8 +49,19 @@ router.post("/addreq", fetchvowner, async (req, res) => {
         return res.status(500).json({ success, msg });
       }else{
         const id = generateUniqueId();
+        var qrimg;
 
         // console.log("id",id)
+        QRCode.toString(req.body.debit, {
+          errorCorrectionLevel: 'H',
+          type: 'png'
+        }, function(err, data) {
+          if (err) throw err;
+          console.log("qrcode",data);
+          qrimg=data;
+         
+        });
+
   
         let savedreq = await Transaction.create({
           transaction_no: id,
@@ -51,9 +72,11 @@ router.post("/addreq", fetchvowner, async (req, res) => {
           debit: req.body.debit,
           credit: req.body.credit,
           amount_due: req.body.amount_due || 0,
+          qrimg:qrimg,
           status: "req_received",
-        });
 
+        });
+console.log("savedreq",savedreq);
 
         const newCredit = {};
         let newAmount=userCredit.requestable_amount-req.body.debit;
@@ -458,4 +481,44 @@ router.post("/filterowntr", fetchvowner, async (req, res) => {
     res.status(500).json({ success:false,msg: "Internal Server Error !" });
   }
 });
+
+//Router 14: scanqr  code to get amount of fuel: vehicle owner login required
+router.post("/scanqr", fetchvowner,async (req, res) => {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  
+  //here get file from user the uploaded file
+  const buffer = fs.readFileSync('/file.png');
+  var result;
+
+ 
+  // __ Parse the image using Jimp.read() __ \\
+  Jimp.read(buffer, function(err, image) {
+      if (err) {
+          console.error(err);
+      }
+  // __ Creating an instance of qrcode-reader __ \\
+  
+      const qrCodeInstance = new qrCodeReader();
+  
+      qrCodeInstance.callback = function(err, value) {
+          if (err) {
+              console.error(err);
+          }
+  // __ Printing the decrypted value __ \\
+          console.log("result",value.result);
+          result=value.result;
+      };
+  
+  // __ Decoding the QR code __ \\
+      qrCodeInstance.decode(image.bitmap);
+      res.status(200).send(result);
+
+  });
+  
+});
+
 module.exports = router;
