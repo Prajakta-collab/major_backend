@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Transaction = require("../models/Transaction");
 const VehicleOwner = require("../models/VehicleOwner");
-
+const upload=require('../middleware/upload');
 const { body, validationResult } = require("express-validator");
 const LiveCredit = require("../models/LiveCredit");
 const generateUniqueId = require("generate-unique-id");
@@ -19,6 +19,7 @@ const Jimp = require("jimp");
 
 // __ Importing qrcode-reader __ \\
 const qrCodeReader = require('qrcode-reader');
+var path=require("path")
 
 
 //Router 1: Raising fuel request for vehicle owner : vehicle login required
@@ -483,7 +484,7 @@ router.post("/filterowntr", fetchvowner, async (req, res) => {
 });
 
 //Router 14: scanqr  code to get amount of fuel: vehicle owner login required
-router.post("/scanqr", fetchvowner,async (req, res) => {
+router.post("/scanqr", fetchatt,async (req, res) => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
@@ -521,4 +522,79 @@ router.post("/scanqr", fetchvowner,async (req, res) => {
   
 });
 
-module.exports = router;
+//Router 15: scanqr  code to get amount of fuel: vehicle owner login required
+
+router.post("/uploadqr",async (req, res) => {
+  console.log("in uploadqr")
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  console.log("req.body",req.body);
+ 
+if(req.file===undefined) return res.send("you must select a file");
+const imgUrl=`http://localhost:5001/file/${req.body.file.filename}`;
+console.log("imgUrl",imgUrl);
+return res.send(imgUrl);  
+});
+
+//Router 16: download qr image 
+
+router.get("/getqr/:id",fetchatt, async (req, res) => {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  let success;
+  try {
+  
+
+    // Find the transaction to be updated and update it
+    let transactionnew = await Transaction.findById(req.params.id);
+    console.log("new transaction", transactionnew.qrimg);
+
+
+    success = true;
+    let msg = "QR Image Downloaded Successfullly";
+    res.status(200).json(transactionnew.qrimg);
+  } catch (error) {
+    console.error(error.message);
+    success = false;
+    let msg = "Internal Server Error !";
+    res.status(500).json({ success, msg });
+  }
+});
+
+
+
+  const readQRCode=async(fileName)=>{
+    const filePath=path.join(__dirname,fileName)
+
+  try {
+  if(fs.existsSync(filePath)) {
+    const img=await Jimp.read(fs.readFileSync(filePath));
+    const qr=new qrCode();
+    const value=await new Promise((acc,rej)=>{
+      qr.callback=(err,val)=>err!=null ? rej(err):acc(val);
+      qr.decode(img.bitmap)
+    });
+    return res.status(200).json(value.result);
+  }
+ 
+  } catch (error) {
+    console.error(error.message);
+    success = false;
+    let msg = "Internal Server Error !";
+    res.status(500).json({ success, msg });
+  }}
+
+  
+
+
+
+  module.exports = { 
+    router:router,
+    readQRCode:readQRCode
+  }
