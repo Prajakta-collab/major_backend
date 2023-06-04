@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start":"node index.js"
+    "start": "node index.js"
   },
   "author": "",
   "license": "ISC",
@@ -21,6 +21,9 @@
     "moment": "^2.29.4",
     "mongoose": "^6.7.0",
     "nodemon": "^2.0.20",
+    "qrcode": "^1.5.3",
+    "qrcode-reader": "^1.0.4",
+    "svg2img": "^1.0.0-beta.2",
     "uuid": "^9.0.0"
   }
 }
