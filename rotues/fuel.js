@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 const Transaction = require("../models/Transaction");
 const VehicleOwner = require("../models/VehicleOwner");
-const upload=require('../middleware/upload');
 const { body, validationResult } = require("express-validator");
 const LiveCredit = require("../models/LiveCredit");
 const generateUniqueId = require("generate-unique-id");
@@ -569,32 +568,6 @@ router.get("/getqr/:id",fetchatt, async (req, res) => {
 
 
 
-  const readQRCode=async(fileName)=>{
-    const filePath=path.join(__dirname,fileName)
-
-  try {
-  if(fs.existsSync(filePath)) {
-    const img=await Jimp.read(fs.readFileSync(filePath));
-    const qr=new qrCode();
-    const value=await new Promise((acc,rej)=>{
-      qr.callback=(err,val)=>err!=null ? rej(err):acc(val);
-      qr.decode(img.bitmap)
-    });
-    return res.status(200).json(value.result);
-  }
- 
-  } catch (error) {
-    console.error(error.message);
-    success = false;
-    let msg = "Internal Server Error !";
-    res.status(500).json({ success, msg });
-  }}
-
-  
 
 
-
-  module.exports = { 
-    router:router,
-    readQRCode:readQRCode
-  }
+  module.exports = router;

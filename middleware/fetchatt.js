@@ -19,7 +19,7 @@ const fetchatt = (req, res, next) => {
         if (data.userType == 'attendant') {
             next();
           }else{
-            res.status(400).json({error:"UnAuthorized request"})
+            return res.status(400).json({error:"UnAuthorized request"})
           }
     } catch (error) {
         res.status(401).send({ error: "Please authenticate using a valid token" })
